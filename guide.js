@@ -8,11 +8,12 @@
   const modalTitle=()=>modalRoot()?.querySelector('#resourceDialogTitle,#modalTitle')?.textContent||'';
   const inModal=()=>!!modalRoot();
   const all=selector=>{try{return [...document.querySelectorAll(selector)].filter(visible);}catch{return [];}};
-  function context(){return {view:state.view,role:state.role,project:state.project,tab:state.tab,stage:getProject()?.stage,section:state.formSection,step:state.formStep,major:state.scoreMajor,modal:modalTitle(),assistant:state.assistantOpen};}
+  function context(){return {view:state.view,role:state.role,project:state.project,tab:state.tab,stage:getProject()?.stage,section:state.formSection,step:state.formStep,major:state.scoreMajor,scoreTable:state.smRuntimeTable,scoreGroup:state.smRuntimeGroup,configTable:state.scTable,configGroup:state.scGroup,questionTab:state.qbTab,questionSource:state.qbSource,modal:modalTitle(),assistant:state.assistantOpen};}
   function refresh(){
     if(!enabled)return;
     const ctx=context(), key=JSON.stringify(ctx), modal=inModal();
     entries=window.V2_INTERACTIONS.filter(n=>!n.id.startsWith('X')).map(n=>({n,targets:all(n.selector)})).filter(e=>e.targets.length);
+    if(ctx.view==='rules')entries=entries.filter(e=>e.n.id.startsWith('Q')||e.n.id.startsWith('G')||e.n.id==='A11');
     if(modal) entries=entries.filter(e=>e.targets.some(el=>modalRoot().contains(el)));
     else entries=entries.filter(e=>e.targets.some(el=>!el.closest('#overlay,#resourceOverlay')));
     // 当前办理优先，其次页面导航，共用身份/帮助放最后。
@@ -70,9 +71,9 @@
       const range=el.type==='number'?[el.min!==''?'最小值 '+el.min:'',el.max!==''?'最大值 '+el.max:'',el.step!==''?'步长 '+el.step:''].filter(Boolean).join('；'):'';
       body=`<p>${escape(kind)} · ${el.disabled?'只读字段，不可编辑':'当前草稿或补正，可编辑'} · ${el.dataset.required==='true'||title.includes('*')?'星号必填':'按报告书要求填写'}</p>${range?`<p>数值约束：${escape(range)}</p>`:''}${choices.length?`<p>可选内容：${choices.map(escape).join(' / ')}</p>`:''}<p>字段与本项目、申创类别和材料版本关联。${el.disabled?'只允许阅读；提交材料的修订需由厅方退回补正，固定等级及推荐单位字段遵循其独立权限。':'输入自动暂存，正式提交时统一校验完整性。'}完整字段定义见PRD附录A。</p>`;
     }else if(question){
-      title=question.querySelector('h3')?.textContent||'评分点';code='评分点 · '+question.dataset.question;
-      const choices=[...question.querySelectorAll('.option')].map(e=>e.textContent.trim());
-      body=`<p>${escape(question.querySelector('.question-head .badge')?.textContent||'正式评分项')} · ${escape(question.querySelector('.question-head small')?.textContent||'')}</p><ul>${choices.map(c=>`<li>${escape(c)}</li>`).join('')}</ul><p>${choices.length?'按上列正式档次给分，扣分应填写依据。':'当前为已提交评分记录，只读不可修改。'}本期由专家人工查看申报材料核验；AI全文检索本期不开发，入口置灰。</p>`;
+      title=question.querySelector('h3')?.textContent||'题目';code='题目 · '+(question.dataset.smQuestion||question.dataset.scPreviewItem||question.dataset.question||'');
+      const choices=[...question.querySelectorAll('.option,.choice-grid label')].map(e=>e.textContent.trim()),inputs=[...question.querySelectorAll('input,textarea,select')],readonly=inputs.length>0&&inputs.every(input=>input.disabled),unscored=question.classList.contains('qb-noscore');
+      body=`<p>${readonly?'只读记录，不可修改':unscored?'不计分题表 · 核验填写':'按当前题表绑定版本填写'}${question.querySelector('.sm-question-source')?' · '+escape(question.querySelector('.sm-question-source').textContent):''}</p>${choices.length?`<ul>${choices.map(c=>`<li>${escape(c)}</li>`).join('')}</ul>`:''}<p>${unscored?'本题用于记录核验内容，不生成数值成绩。':'按所示题型与配置选项、数量或数值填写；扣分需有依据。'}达标题是否必须全部达标、整表总分及门槛由题表外层设置，不能仅根据“细则”名称判断。已提交版本、原始答案和分数锁定；题库修改只影响后续发布。AI全文检索本期不开发，入口置灰。</p>`;
     }else{title=required.querySelector('p')?.textContent||'必备条件';code='必备条件核验';body='<p>默认达标，必须人工核验；不达标可提交不通过意见，不能被总分抵消。AI检索本期不开发，由专家人工查证。</p>';}
     $('guideDetail').hidden=false;$('guideDetail').innerHTML=`<article class="guide-card guide-detail-card"><small class="guide-code">${escape(code)}</small><h3>${escape(title)}</h3>${body}</article>`;$('guideScroll').scrollTop=0;
   }

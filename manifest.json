@@ -1,6 +1,6 @@
 {
-  "version": "V2",
-  "published": "2026-11-03",
+  "version": "V2.9",
+  "published": "2026-11-04",
   "files": [
     {
       "file": ".gitignore",
@@ -14,8 +14,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 1158,
-      "sha256": "3d220f0761d89f3341673c5d1060369c922ecc4b29a7fb92933505d8f60f83c6"
+      "bytes": 1529,
+      "sha256": "8f5d2c6db0ecf049c9526289d9f326a280999a163a0176f28bfb56fbc3145362"
     },
     {
       "file": "admin-theme.css",
@@ -24,8 +24,8 @@
     },
     {
       "file": "app.js",
-      "bytes": 146997,
-      "sha256": "15d63cc87cf693eddb44277c923fad353494a05865a6fdf4d7d6d9e7596471ae"
+      "bytes": 147465,
+      "sha256": "c3626ddd076d09159c77f5ba755e3d4dcb2722b6a41b74223dda4a14804438b3"
     },
     {
       "file": "data.js",
@@ -39,8 +39,8 @@
     },
     {
       "file": "demo.js",
-      "bytes": 17880,
-      "sha256": "d2530dd4c2a53d974a509625c7dbeb2edd6764b427a94257b1e9bec47fa76ece"
+      "bytes": 18849,
+      "sha256": "3c3cb4cd99e56225ee280930f4d6d2d58e0e45dce808fb98e0d6385392dc7d2d"
     },
     {
       "file": "docs/PRD-景区边界与资源清单.md",
@@ -48,19 +48,44 @@
       "sha256": "e005b82698e178c34a41ff7eb20bc82c3749fc75320b513a642210029ee224de"
     },
     {
+      "file": "docs/PRD-自定义评分表与节点挂载.md",
+      "bytes": 6837,
+      "sha256": "df0e37a09cea3ca70339fc42560e428a443c17a5365be0cc9c32111cf54efd27"
+    },
+    {
+      "file": "docs/PRD-评分表配置与景区演示聚焦.md",
+      "bytes": 15865,
+      "sha256": "c080e98510c4689fca7cec7fa7cb5efc985c39e16221592e848c478c4fc8b8cd"
+    },
+    {
+      "file": "docs/PRD-题库与题表配置.md",
+      "bytes": 5549,
+      "sha256": "d2b1f7125559b8f3e8209b64827ae2971b9734b6d6c5c6e6491bec8ac72ecb15"
+    },
+    {
       "file": "docs/PRD.html",
-      "bytes": 502253,
-      "sha256": "45acb372464d3d8c81e9b57540dc88ceae33423798beed4c0e029f98c33f850a"
+      "bytes": 488896,
+      "sha256": "2f5ba745fb22c7fae46e0a7d8a5d90dde8208f6b32982ce4b936757db8f9c6ec"
     },
     {
       "file": "docs/PRD.md",
-      "bytes": 437940,
-      "sha256": "d700abf4cf2daf7a4bdb4e4e799d4bb43a51005709b07825159d3c036f89a994"
+      "bytes": 418436,
+      "sha256": "a11879a7df2150fc3b72f601c40ce8ef17cfe01d65095724ddaf301218da5dde"
     },
     {
       "file": "docs/field-dictionary.json",
-      "bytes": 102778,
-      "sha256": "65d11a2c27d9443398a686355db850c4f8e23a4d05ec7401cef68e4f28d3b390"
+      "bytes": 16156,
+      "sha256": "8b490d41b5c56f2391dd0a0b13a6c6e2f3707249b163493bfc10dc9da5aa0f55"
+    },
+    {
+      "file": "docs/评分配置清单.json",
+      "bytes": 538578,
+      "sha256": "ef31753c15d00a9f7781cbd178c26d9d84d7b22f013feae88e81974a4913aa9a"
+    },
+    {
+      "file": "docs/评分配置清单.md",
+      "bytes": 42464,
+      "sha256": "cf375cc09e1525b835900c2d12d25400cba3c86884777ca9a66e822ba4c06d4e"
     },
     {
       "file": "guide.css",
@@ -69,18 +94,28 @@
     },
     {
       "file": "guide.js",
-      "bytes": 11478,
-      "sha256": "095639abf5ea041d9b2693a86b1297b05b94d2d01684c7541adac9bfadd12a4a"
+      "bytes": 12300,
+      "sha256": "4a259fbd0983e8cf56a458fe794285e6480f63935571dc0141c9693945a23454"
     },
     {
       "file": "index.html",
-      "bytes": 4290,
-      "sha256": "d1fb250e4eb9968997601b4d77374b511cab28466a3516d564d74a01807b6696"
+      "bytes": 4615,
+      "sha256": "bf181db47b6e64f58cbaab1030fd464034db6d0eb8f4340d22102dc4b326ab1f"
     },
     {
       "file": "interaction-spec.js",
-      "bytes": 72030,
-      "sha256": "ea1200e3240de37492e8f7e4ea4236b5ed04b5c1a2825b203772e0828f63a923"
+      "bytes": 88267,
+      "sha256": "e568d7f04b34c45be74876979686bf027a222335c83f06a147023319ccb7d617"
+    },
+    {
+      "file": "question-tables.css",
+      "bytes": 3169,
+      "sha256": "56ad07182c59188f89841cfc0364f681731ba209e47184a1431083030ce7fc12"
+    },
+    {
+      "file": "question-tables.js",
+      "bytes": 37404,
+      "sha256": "887ab4c8cf4f92210d8f05d9c6852cdb3b34975a12c759a8d7e069818faf2af4"
     },
     {
       "file": "registration.css",
@@ -111,6 +146,31 @@
       "file": "scenic-service-rules.js",
       "bytes": 305996,
       "sha256": "3fd8b14c869c2f6bea6cdb32937076b6e29f0e2b43ad7534e2420540755c4edd"
+    },
+    {
+      "file": "score-mounts.css",
+      "bytes": 3201,
+      "sha256": "f7ef1b8002233bfe80ec5e362e2984c8e56e965f3c17904a8785012cd350b9aa"
+    },
+    {
+      "file": "score-mounts.js",
+      "bytes": 50766,
+      "sha256": "c8e812d57f168f2ed5b17c53d9baa97772cd1af26cee46869b1d1fb5f4810d64"
+    },
+    {
+      "file": "scoring-catalog.js",
+      "bytes": 538607,
+      "sha256": "33ec74cf891866b18cdb5519a9c6297555b12cc60fec740bfefb90ea7e0a6981"
+    },
+    {
+      "file": "scoring-config.css",
+      "bytes": 3283,
+      "sha256": "f2888bbe28cd2b49f50251cc0def6b63255585298534f26b1d84cc69719888ad"
+    },
+    {
+      "file": "scoring-config.js",
+      "bytes": 55275,
+      "sha256": "be732d698bd847297eb9867768380ddcc0b48c248ed6c5d9f286657658208220"
     },
     {
       "file": "signature.css",

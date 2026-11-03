@@ -49,7 +49,7 @@
     return values;
   }
   function sampleFile(p,key,title){
-    const image=key==='photos'||key.startsWith('evidence-');
+    const image=key==='photos'||key.startsWith('evidence-')||key.startsWith('sm-evidence|');
     const text=image?`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520"><rect width="900" height="520" fill="#eef4fa"/><path d="M0 400L180 200 350 360 540 150 900 420V520H0Z" fill="#b4c9da"/><circle cx="720" cy="110" r="48" fill="#d5b86b"/><text x="45" y="455" fill="#193c5c" font-size="26">现场照片占位 · 原型演示</text><text x="45" y="490" fill="#475569" font-size="18">非真实现场影像，不作为评审依据</text></svg>`:`原型演示材料\n\n项目：${p.name}\n材料：${title}\n\n此文件为本地生成的模拟附件，仅供演示上传、预览、下载和删除交互。\n不代表真实申报材料、实际评审意见、会议决定或有效签章。\n`;
     const type=image?'image/svg+xml':'text/plain';
     return {name:(image?'现场照片':title.replace(/[\\/:*?"<>|]/g,'-'))+(image?'.svg':'.txt'),type,size:new Blob([text]).size,data:dataUrl(type,text),text:image?'':text,at:new Date().toISOString(),demo:true};
@@ -69,6 +69,13 @@
   }
   function initializeData(data){for(const p of data.projects)initializeProject(p);}
   function defaultAnswer(q,stage){
+    if(q.tableId&&typeof scAnswerScore==='function'){
+      const best=q.options?.slice().sort((a,b)=>b.score-a.score)[0],answer={score:q.max,evidence:[],note:'',rectification:''};
+      if(q.mode==='multiple')answer.options=q.options.filter(option=>!option.exclusive||option.key===q.options.filter(other=>other.exclusive===option.exclusive).sort((a,b)=>b.score-a.score)[0].key).map(option=>option.key);
+      else if(q.mode.startsWith('quantity-'))answer.count=q.mode==='quantity-add'?Math.ceil(q.max/q.unit):0;
+      else if(['single','condition','band-range','integrity'].includes(q.mode)){answer.option=best?.key;if(q.mode==='integrity')answer.integrity=true;}
+      answer.score=scAnswerScore(q,answer);answer.label=best?.label||'按配置细则核验';return answer;
+    }
     if(q.summer&&q.mode==='multiple'){
       const options=q.options.filter(option=>option.score>0&&!option.deduction);const score=Math.min(q.max,options.reduce((sum,option)=>sum+option.score,0));
       return {score,options:options.map(option=>option.key),label:options.map(option=>option.label).join('；'),evidence:[],note:score<q.max?'按已选择的对应细则计分，其余项目暂不计分。':'',rectification:score<q.max?'补充其余项目对应证明资料。':''};
@@ -107,6 +114,7 @@
   }
   function ocrAllowed(p,key){return key==='ocr-application'?state.role==='city'&&p.region==='黔东南州'&&(p.stage==='draft'||!!p.correction):key==='ocr-meeting'&&state.role==='expert'&&p.stage==='meeting'&&canHandle(p)&&!sheetFor(p,p.stage).submitted;}
   async function startOcr(input){
+    if(window.SM_READY&&input.dataset.upload==='ocr-meeting'&&getProject()&&sheetFor(getProject(),getProject().stage).scoringMethod)return smStartOcr(input);
     const p=getProject(),key=input.dataset.upload,file=input.files?.[0];if(!p||!file)return;
     if(!ocrAllowed(p,key))return toast('当前角色或环节不能进行OCR回填。');
     if(file.size>8*1024*1024)return toast('OCR演示文件请控制在8MB以内。');

@@ -17,7 +17,7 @@ const addMonths=(v,n)=>{const d=new Date(v+'T12:00:00');d.setMonth(d.getMonth()+
 const daysLeft=d=>Math.ceil((new Date(d+'T23:59:59')-new Date())/86400000);
 const workingEnd=start=>{let d=new Date(start+'T12:00:00'),n=0;while(n<7){if(d.getDay()!==0&&d.getDay()!==6)n++;if(n<7)d.setDate(d.getDate()+1);}return dateString(d);};
 const stagePath=p=>['draft','initial','document',...(p.type==='scenic'?['meeting','hall']:[]),'creation','field','committee','publicity','done'];
-const cat=id=>D.categories.find(c=>c.id===id);
+const cat=id=>(window.V2_CATEGORY_REGISTRY||D.categories).find(c=>c.id===id);
 const expertName=id=>db.experts.find(e=>e.id===id)?.name||id;
 const person=()=>state.role==='expert'?expertName(state.expert):ROLES[state.role][1];
 const DEFERRED_ACTIONS=new Set(['assistant','ai-item','search-materials','run-search','assistant-search']);
@@ -165,7 +165,7 @@ function visibleProjects(){return db.projects.filter(p=>state.role==='expert'?Ob
 function nextAction(p){if(state.role==='city')return p.correction?'补充材料':p.stage==='draft'?'继续填报':p.stage==='creation'?'办理创建事项':'查看项目';if(state.role==='expert')return canHandle(p)?p.stage==='document'?'审核资料':'进入评分':'查看记录';return canHandle(p)?p.stage==='initial'?'审查资料':p.stage==='hall'?'办理复审':p.stage==='committee'?'上传上会材料':p.stage==='document'&&!summary(p,'document').total?'指派专家':p.stage==='publicity'?'查看公示事项':'进入办理':'查看项目';}
 function render(){
   const navs=state.role==='hall'?[['home','工作台','layout-dashboard'],['projects','申创项目','folder'],['publicity','待公示项目','megaphone'],['archive','归档项目','archive'],['experts','专家库','users-round']]:state.role==='city'?[['home','工作台','layout-dashboard'],['projects','我的申创项目','folder'],['archive','归档项目','archive']]:state.role==='expert'?[['home','工作台','layout-dashboard'],['projects','评审项目','folder'],['archive','历史评审记录','archive']]:[['home','工作台','layout-dashboard'],['settings','年度申报设置','settings-2'],['rules','评分项管理','list-checks']];
-  document.getElementById('nav').innerHTML=navs.map(([v,n,i])=>`<button class="nav-btn ${state.view===v||(state.view==='project'&&v===state.origin)?'active':''}" data-nav="${v}">${icon(i)}${n}${v==='publicity'?`<span class="count">${db.projects.filter(p=>p.stage==='publicity').length}</span>`:''}</button>`).join('');
+  document.getElementById('nav').innerHTML=navs.map(([v,n,i])=>`<button class="nav-btn ${state.view===v||(state.view==='project'&&v===state.origin)?'active':''}" data-nav="${v}">${icon(i)}${n}${v==='publicity'?`<span class="count">${db.projects.filter(p=>p.stage==='publicity'&&D.categories.some(category=>category.id===p.type)).length}</span>`:''}</button>`).join('');
   document.getElementById('role').value=state.role;
   document.getElementById('identity').innerHTML=`<div class="person">${icon('user-round')}<strong>${esc(person())}</strong>${state.role==='city'?'· 黔东南州':''}</div>${state.role==='expert'?`<select class="expert-switch" id="expertSelect" aria-label="选择演示专家">${db.experts.map(e=>`<option value="${e.id}" ${e.id===state.expert?'selected':''}>${esc(e.name)}</option>`).join('')}</select>`:''}`;
   document.getElementById('today').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
@@ -198,7 +198,8 @@ function dashboard(){
     <section class="panel"><div class="panel-head"><div><h2>申创业务链路</h2><p>统计当前停留在各环节的项目，往年申报、本年现场评审计入本年。</p></div><div class="actions"><select id="dashboardCategory" aria-label="业务链路申创类别">${D.categories.filter(c=>c.enabled).map(c=>`<option value="${c.id}" ${state.flowCategory===c.id?'selected':''}>${c.name}</option>`).join('')}</select><select id="dashboardYear" aria-label="统计年度">${[2026,2025].map(y=>`<option ${state.year===y?'selected':''}>${y}</option>`).join('')}</select></div></div>${pipeline({type:state.flowCategory||'scenic',stage:'draft'},true)}</section>
     ${announcementPanel()}</div>`;
 }
-function announcementPanel(){return `<section class="panel"><div class="panel-head"><div><h2>公告</h2><p>申报通知、公示与评定结果</p></div>${icon('megaphone')}</div>${db.notices.map((n,i)=>`<button class="announcement" data-action="notice" data-index="${i}">${badge(n.type,n.type.includes('公示')?'amber':'green')}<div><strong>${esc(n.title)}</strong><small>${n.start?`${n.start} 至 ${n.end}`:'贵州省文化和旅游厅'}</small></div><span class="notice-date">${n.date}</span>${icon('chevron-right')}</button>`).join('')}</section>`;}
+function visibleNoticeIds(notice){return (notice.projectIds||[]).filter(id=>D.categories.some(category=>category.id===getProject(id)?.type));}
+function announcementPanel(){return `<section class="panel"><div class="panel-head"><div><h2>公告</h2><p>申报通知、公示与评定结果</p></div>${icon('megaphone')}</div>${db.notices.map((n,i)=>({n,i})).filter(({n})=>!n.projectIds?.length||visibleNoticeIds(n).length).map(({n,i})=>`<button class="announcement" data-action="notice" data-index="${i}">${badge(n.type,n.type.includes('公示')?'amber':'green')}<div><strong>${esc(n.title)}</strong><small>${n.start?`${n.start} 至 ${n.end}`:'贵州省文化和旅游厅'}</small></div><span class="notice-date">${n.date}</span>${icon('chevron-right')}</button>`).join('')}</section>`;}
 function categoryChips(){return `<div class="categories">${[{id:'all',name:'全部类别'},...D.categories].map(c=>`<button class="chip ${state.category===c.id?'active':''}" data-category="${c.id}" ${c.enabled===false?'disabled':''}>${c.name}${c.enabled===false?' · 开发中':''}</button>`).join('')}</div>`;}
 function projectList(view){
   const archived=view==='archive';let rows=visibleProjects().filter(p=>archived?['done','failed'].includes(p.stage):!['done','failed'].includes(p.stage)&&(state.includePublicity||p.stage!=='publicity'));
@@ -577,5 +578,8 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-action="save-in
 function captureTaskDraft(el){const p=getProject();if(!p||state.view!=='project'||!el.name||el.disabled||el.dataset.field||el.closest('#overlay')||el.closest('[data-question]')||el.dataset.required!==undefined)return;const key=state.role+'-'+state.expert+'-'+p.stage;p.taskDrafts??={};p.taskDrafts[key]??={};p.taskDrafts[key][el.name]=el.type==='radio'?decision(el.name):el.type==='checkbox'?el.checked:el.value;save();}
 function restoreTaskDraft(){const p=getProject();if(!p||state.view!=='project')return;const draft=p.taskDrafts?.[state.role+'-'+state.expert+'-'+p.stage]||{};document.querySelectorAll('#main [name]').forEach(el=>{if(el.disabled||el.dataset.field||el.closest('[data-question]')||el.dataset.required!==undefined||draft[el.name]===undefined)return;if(el.type==='radio')el.checked=draft[el.name]===el.value;else if(el.type==='checkbox')el.checked=draft[el.name];else el.value=draft[el.name];});}
 function expireCreation(){for(const p of db.projects){if(p.stage==='creation'&&p.creationEnd<today()&&!p.extension){record(p,'创建周期超期未通过','未在创建期内提交现场评审申请，也未申请延期。');p.stage='failed';}}}
+if(typeof scInitialize==='function')scInitialize();
+if(typeof smInitialize==='function')smInitialize();
+if(typeof qbInitialize==='function')qbInitialize();
 expireCreation();
 save();routeChanged();initializeWorkflowUI();
