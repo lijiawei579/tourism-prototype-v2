@@ -1,0 +1,171 @@
+{
+  "version": "V2",
+  "published": "2026-11-03",
+  "files": [
+    {
+      "file": ".gitignore",
+      "bytes": 46,
+      "sha256": "8d86d2a0e1749f50e2cadb66e6a353c651e7bd6236d418badf9d6ceb51f897ae"
+    },
+    {
+      "file": ".nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "README.md",
+      "bytes": 1158,
+      "sha256": "3d220f0761d89f3341673c5d1060369c922ecc4b29a7fb92933505d8f60f83c6"
+    },
+    {
+      "file": "admin-theme.css",
+      "bytes": 29195,
+      "sha256": "27798a28f0a08dcd758cfc6a872944c778d516ffda04efd924bc6c5864450094"
+    },
+    {
+      "file": "app.js",
+      "bytes": 146997,
+      "sha256": "15d63cc87cf693eddb44277c923fad353494a05865a6fdf4d7d6d9e7596471ae"
+    },
+    {
+      "file": "data.js",
+      "bytes": 68637,
+      "sha256": "db30bd2a7147fb80bcac90dfb59d0b47bca442f3544408dba873638ae72db8f3"
+    },
+    {
+      "file": "demo.css",
+      "bytes": 1004,
+      "sha256": "01d4c355608b2ce6edae6684cab1efc4d942f48421acfe0faa96122d5c891e22"
+    },
+    {
+      "file": "demo.js",
+      "bytes": 17880,
+      "sha256": "d2530dd4c2a53d974a509625c7dbeb2edd6764b427a94257b1e9bec47fa76ece"
+    },
+    {
+      "file": "docs/PRD-景区边界与资源清单.md",
+      "bytes": 22570,
+      "sha256": "e005b82698e178c34a41ff7eb20bc82c3749fc75320b513a642210029ee224de"
+    },
+    {
+      "file": "docs/PRD.html",
+      "bytes": 502253,
+      "sha256": "45acb372464d3d8c81e9b57540dc88ceae33423798beed4c0e029f98c33f850a"
+    },
+    {
+      "file": "docs/PRD.md",
+      "bytes": 437940,
+      "sha256": "d700abf4cf2daf7a4bdb4e4e799d4bb43a51005709b07825159d3c036f89a994"
+    },
+    {
+      "file": "docs/field-dictionary.json",
+      "bytes": 102778,
+      "sha256": "65d11a2c27d9443398a686355db850c4f8e23a4d05ec7401cef68e4f28d3b390"
+    },
+    {
+      "file": "guide.css",
+      "bytes": 6914,
+      "sha256": "aee75180dd9ae5bc0ffcb3f95da475f3f756ca6794914774f62c10b9cd6e59f5"
+    },
+    {
+      "file": "guide.js",
+      "bytes": 11478,
+      "sha256": "095639abf5ea041d9b2693a86b1297b05b94d2d01684c7541adac9bfadd12a4a"
+    },
+    {
+      "file": "index.html",
+      "bytes": 4290,
+      "sha256": "d1fb250e4eb9968997601b4d77374b511cab28466a3516d564d74a01807b6696"
+    },
+    {
+      "file": "interaction-spec.js",
+      "bytes": 72030,
+      "sha256": "ea1200e3240de37492e8f7e4ea4236b5ed04b5c1a2825b203772e0828f63a923"
+    },
+    {
+      "file": "registration.css",
+      "bytes": 2542,
+      "sha256": "9af6afd37048a08d4f12bf8c6c049cc167854cf35d3a04ba16b71b84a43f68c0"
+    },
+    {
+      "file": "resource-catalog.js",
+      "bytes": 4758,
+      "sha256": "8263540a073db6c313d18a946eb186bf5c96b4405431bd9e423e11efc8060488"
+    },
+    {
+      "file": "resources.css",
+      "bytes": 5944,
+      "sha256": "40e270b3c64bf6a96b714cdf20839da56fcb305f0153b42f88db95629bc15529"
+    },
+    {
+      "file": "resources.js",
+      "bytes": 44663,
+      "sha256": "1e63b72166948ff54ab2198ebec49d70d4d2156958db4093fa03c946bea5dfe5"
+    },
+    {
+      "file": "review-layout.css",
+      "bytes": 4936,
+      "sha256": "97757e23fc3382e3fb0fbe04db22ac24ca023318451d7f7e74a8ce4679fab850"
+    },
+    {
+      "file": "scenic-service-rules.js",
+      "bytes": 305996,
+      "sha256": "3fd8b14c869c2f6bea6cdb32937076b6e29f0e2b43ad7534e2420540755c4edd"
+    },
+    {
+      "file": "signature.css",
+      "bytes": 897,
+      "sha256": "b317ca4b162b4cfa9c7979a9356a474ad8e7751e24a52f401878ee8b6ee1c1ba"
+    },
+    {
+      "file": "signature.html",
+      "bytes": 910,
+      "sha256": "c29095e960ba2935a2a0e1d6009af9325a8e25cd7e9c9070d70d97ca5e0fe89f"
+    },
+    {
+      "file": "signature.js",
+      "bytes": 2391,
+      "sha256": "13f3e940d016afdea9ca13bcb91127f0b4141f5ca302a6566b48848fbc69038b"
+    },
+    {
+      "file": "styles.css",
+      "bytes": 25036,
+      "sha256": "b7e2c897774846d41dda407a4028a00ca0e4f84dc2f2f92d4b53551842f3d1ee"
+    },
+    {
+      "file": "summer-rules.js",
+      "bytes": 101984,
+      "sha256": "9bbcc8099ccf11c679884e84d9135fa75e17b3bede60054db0aca7a24ba84292"
+    },
+    {
+      "file": "validation.css",
+      "bytes": 466,
+      "sha256": "d321e698fc08c1c7e4f9cfcd61c8563377d03841c096e17b37c91f0e9f067df5"
+    },
+    {
+      "file": "validation.js",
+      "bytes": 12116,
+      "sha256": "6152669eba98d7126cb9dd7d65f1bad2ab80ee2e861a8f9553a0280868ee1fd9"
+    },
+    {
+      "file": "vendor/lucide.min.js",
+      "bytes": 397450,
+      "sha256": "ab85225ecc1daa2033607856f03dd2dabcbc08e2d260a5b97e17c690aa929766"
+    },
+    {
+      "file": "vendor/qrcode.js",
+      "bytes": 56694,
+      "sha256": "79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c"
+    },
+    {
+      "file": "vendor/qrcode_UTF8.js",
+      "bytes": 793,
+      "sha256": "e522d64003b332e29271fdce4993ed3ae2934c8947f41654bd324ddcfa2de301"
+    },
+    {
+      "file": "workflow-ui.js",
+      "bytes": 31799,
+      "sha256": "3743e2398f79b9876c6aae0a142766e10cfed53aa39702adcb17cccf99b03a8e"
+    }
+  ]
+}

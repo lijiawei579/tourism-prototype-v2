@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>旅游品牌申创 · V2版本</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="guide.css">
+  <link rel="stylesheet" href="admin-theme.css">
+  <link rel="stylesheet" href="demo.css">
+  <link rel="stylesheet" href="resources.css">
+  <link rel="stylesheet" href="review-layout.css">
+  <link rel="stylesheet" href="registration.css">
+  <link rel="stylesheet" href="validation.css">
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <aside class="sidebar">
+    <a class="brand" href="#home"><span class="brand-logo">黔</span><span><strong>贵州省文化和旅游厅</strong><small>旅游品牌申创管理系统</small></span></a>
+    <div class="identity"><label for="role">演示角色</label><select id="role"><option value="hall">省厅审核人员</option><option value="city">市州申创人员</option><option value="expert">评审专家</option><option value="admin">系统管理员</option></select><div id="identity"></div></div>
+    <nav id="nav" aria-label="主导航"></nav>
+    <div class="sidebar-end"><span class="version">V2版本</span><p>前端交互原型 · 本地数据</p><a href="docs/PRD.html" target="_blank" rel="noopener">查看产品说明 ↗</a></div>
+  </aside>
+  <div class="workspace"><header class="topbar"><div id="breadcrumb">工作台</div><div class="topbar-right"><span id="today"></span><button class="btn small guide-toggle" id="guideToggle" aria-pressed="false" aria-controls="prototypeGuide">原型讲解</button><button class="icon-btn" data-action="help" aria-label="查看版本说明"><i data-lucide="circle-help"></i></button><div class="topbar-user"><span class="avatar" id="avatar">周</span><span id="topbarName">周晓岚</span><span id="topbarRole" class="topbar-role">省厅审核人员</span></div></div></header><main id="main" tabindex="-1"></main></div>
+  <div id="overlay" class="overlay" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header><div><small id="modalSubtitle"></small><h2 id="modalTitle"></h2></div><button class="icon-btn" data-action="close-modal" aria-label="关闭弹窗"><i data-lucide="x"></i></button></header><div id="modalBody" class="modal-body"></div><footer id="modalFooter"></footer></section></div>
+  <div id="assistant" hidden></div><button class="assistant-trigger" id="assistantTrigger" data-action="assistant" hidden><i data-lucide="messages-square"></i><span>智能助手</span></button>
+  <div id="toasts" aria-live="polite"></div>
+  <aside id="prototypeGuide" class="prototype-guide" aria-label="产品交互节点说明" hidden>
+    <header class="guide-header"><div><small>V2 · PRODUCT NOTES</small><h2>原型交互说明</h2></div><button id="guideClose" class="guide-close" aria-label="退出原型讲解">×</button></header>
+    <div class="guide-context"><span id="guideContext"></span><p>左侧正常操作，右侧同步说明。OCR已开放演示识别与核对回填；默认值和模拟附件仅供演示。AI检索及智能助手仍置灰。</p></div>
+    <div class="guide-tools"><label><input type="checkbox" id="guideMarkers" checked>显示编号</label><a href="docs/PRD.html" target="_blank" rel="noopener">完整 PRD ↗</a></div>
+    <div class="guide-scroll" id="guideScroll"><div id="guideDetail" hidden></div><div id="guideCards"></div></div>
+    <footer class="guide-footer"><span id="guideCount"></span><button id="guideExit">退出讲解，继续操作</button></footer>
+  </aside>
+  <div id="guideMarkerLayer" class="guide-marker-layer" aria-hidden="true" hidden></div>
+  <script src="vendor/lucide.min.js"></script>
+  <script src="data.js"></script><script src="scenic-service-rules.js"></script><script src="summer-rules.js"></script><script src="vendor/qrcode.js"></script><script src="vendor/qrcode_UTF8.js"></script><script src="demo.js"></script><script src="resource-catalog.js"></script><script src="resources.js"></script><script src="workflow-ui.js"></script><script src="validation.js"></script><script src="app.js"></script><script src="interaction-spec.js"></script><script src="guide.js"></script>
+</body>
+</html>

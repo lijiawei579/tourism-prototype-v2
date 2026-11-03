@@ -1,0 +1,457 @@
+@charset "UTF-8";
+/* V2 · 政务管理界面。保留原业务结构，仅统一视觉与布局密度。 */
+:root {
+  --ink:#303133;
+  --muted:#909399;
+  --brand:#1677df;
+  --dark:#112548;
+  --line:#ebeef5;
+  --bg:#f4f6f9;
+  --amber:#b76a09;
+  --red:#d94848;
+  --radius:8px;
+  --sidebar-width:218px;
+  --surface-shadow:0 2px 12px rgb(30 49 78 / 4%);
+}
+body {font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.6;color:var(--ink)}
+h1 {font-size:20px;letter-spacing:0;font-weight:600}
+h2 {font-size:16px;letter-spacing:0;font-weight:600}
+h3 {font-size:14px;font-weight:600}
+strong {font-weight:600}
+a {color:var(--brand)}
+button,a,input,select,textarea {transition:background-color .15s,border-color .15s,color .15s}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {outline:2px solid #91caff;outline-offset:2px}
+button:disabled {opacity:.5}
+input[type="radio"],input[type="checkbox"] {accent-color:#409eff}
+.icon {stroke-width:1.7;width:17px;height:17px}
+
+/* 框架：深蓝全高导航、白色顶栏、浅灰工作区。 */
+.sidebar {width:var(--sidebar-width);padding:14px 0 18px;background:var(--dark);color:#aebbd1}
+.brand {padding:0 10px;gap:10px;margin:0 0 20px;min-height:42px}
+.brand-logo {width:38px;height:38px;flex:0 0 38px;border-radius:8px;background:#1661bf;color:#fff;font:600 22px/1 "Microsoft YaHei",sans-serif;box-shadow:inset 0 1px 0 #ffffff1a}
+.brand strong {font-size:13px;letter-spacing:0;white-space:nowrap;font-weight:600}
+.brand small {font-size:11px;color:#a6b5d0;display:block;margin-top:1px}
+.identity {margin:0 14px 14px;padding:12px 0 14px;border-color:#ffffff12}
+.identity>label {font-size:11px;letter-spacing:0;color:#8395b5;margin-bottom:7px}
+.identity select {height:32px;padding:4px 9px;background:#192f52;border-color:#354867;border-radius:4px;font-size:12px}
+.identity select:focus-visible {outline-color:#409eff}
+.person {margin-top:10px;color:#aab8cf;font-size:11px;gap:7px}
+.person strong {color:#d6dfed;font-weight:400}
+.person .icon {width:14px;height:14px}
+.sidebar nav {gap:0}
+.nav-btn {border-radius:0;min-height:52px;padding:14px 18px;gap:11px;font-size:14px;color:#b9c5da}
+.nav-btn .icon {width:18px;height:18px}
+.nav-btn:hover {background:#1b355a;color:#fff}
+.nav-btn.active,.nav-btn.active:hover {background:#196bd1;box-shadow:none;color:#fff}
+.nav-btn .count {background:#ffffff24;border-radius:10px;font-size:11px}
+.sidebar-end {padding:25px 18px 0;color:#7f94b4;font-size:10px}
+.sidebar-end a {color:#9eb6d9}
+.version {color:#adbed9;border-color:#435777;font-size:10px;letter-spacing:0}
+.workspace {margin-left:var(--sidebar-width);background:var(--bg);min-width:0}
+.topbar {height:56px;padding:0 22px;border-bottom:0;gap:16px}
+#breadcrumb {font-size:12px;gap:8px;color:#a2a6af;min-width:0;white-space:nowrap}
+#breadcrumb strong {font-size:15px;color:#262b33;font-weight:600}
+.topbar-right {gap:14px;font-size:12px;flex-shrink:0}
+.topbar-right #today {font-size:11px;color:#a1a6b0}
+.topbar-user {display:flex;align-items:center;gap:8px;color:#606266;white-space:nowrap}
+.avatar {width:30px;height:30px;background:#1c73da;color:#fff;font-size:13px}
+.topbar-role {border:1px solid #b5d7ff;border-radius:3px;padding:0 6px;font-size:11px;line-height:19px;color:#2983e8;background:#f7fbff}
+.topbar .icon-btn {color:#9098a7;padding:4px}
+.icon-btn:hover {background:#f0f5fc;color:var(--brand)}
+#main {padding:18px 20px 56px;max-width:none;margin:0}
+.page-head {background:#fff;border:1px solid #f1f3f7;border-radius:8px;box-shadow:var(--surface-shadow);padding:17px 20px;margin-bottom:16px;align-items:center;min-height:76px}
+.page-head .eyebrow {display:none}
+.page-head p {font-size:12px;color:#909399;margin-top:5px;line-height:1.65}
+.eyebrow {font-size:11px;letter-spacing:0;color:#909399;margin-bottom:6px}
+.actions {gap:8px}
+.btn {border-color:#dcdfe6;border-radius:4px;padding:6px 14px;font-size:13px;min-height:32px;line-height:1.4;gap:6px;box-shadow:none}
+.btn:hover {background:#ecf5ff;border-color:#b3d8ff;color:#409eff}
+.btn.primary {background:#409eff;border-color:#409eff;color:white}
+.btn.primary:hover:not(:disabled) {background:#2589ed;border-color:#2589ed;color:white}
+.btn.danger {border-color:#f7c5c5;color:#e45151}
+.btn.small {font-size:12px;padding:5px 10px;min-height:28px}
+.text-btn {font-size:12px;color:#409eff;gap:5px}
+.back {font-size:12px;margin-bottom:12px}
+.panel,.task-card,.project-head,.question {border-color:#f0f2f6;border-radius:8px;box-shadow:var(--surface-shadow)}
+.panel-head {padding:17px 20px;border-bottom:1px solid #f0f2f5;align-items:center}
+.panel-head h2,.task-heading h2,.task-card>h2 {position:relative;padding-left:11px;line-height:1.5}
+.panel-head h2::before,.task-heading h2::before,.task-card>h2::before {content:"";position:absolute;left:0;top:4px;width:4px;height:16px;background:#2279e5;border-radius:2px}
+.panel-head p {font-size:12px;margin-top:4px}
+.panel-body {padding:20px}
+.stack {gap:16px}
+.two-col {gap:16px}
+.task-card {padding:20px}
+.task-card+.task-card {margin-top:16px}
+.task-heading {gap:14px;margin-bottom:18px;align-items:flex-start}
+.task-heading h2 {font-size:16px}
+.task-heading p {font-size:12px;line-height:1.7}
+.task-card .footer {margin-top:20px;padding-top:18px;border-color:#ebeef5;gap:8px}
+.task-card>.footer .primary:only-child {min-width:150px}
+
+/* 工作台：统一白色统计卡片，数值与业务内容分层。 */
+.stats {gap:16px;margin-bottom:16px}
+.stat {position:relative;background:#fff;border:1px solid #f0f2f6;border-radius:8px;padding:20px;box-shadow:var(--surface-shadow);overflow:hidden}
+.stat:first-child {background:#fff;border-color:#f0f2f6}
+.stat>span {color:#606266;font-size:13px}
+.stat strong {font:600 30px/1.3 "Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;color:#2378dc;margin:10px 0 7px}
+.stat:nth-child(2) strong {color:#3b587f}
+.stat:nth-child(3) strong {color:#c98a2b}
+.stat:nth-child(4) strong {color:#52a633}
+.stat p {font-size:11px;color:#a2a6ad}
+.stat-icon {position:absolute;right:18px;top:19px;width:38px;height:38px;border-radius:8px;display:grid;place-items:center;background:#ecf5ff;color:#409eff}
+.stat-icon .icon {width:21px;height:21px}
+.stat:nth-child(2) .stat-icon {background:#edf2fa;color:#6783ad}
+.stat:nth-child(3) .stat-icon {background:#fff7e8;color:#dca350}
+.stat:nth-child(4) .stat-icon {background:#f0f9eb;color:#7bbf54}
+.announcement {padding:16px 20px;gap:12px;border-color:#f0f2f5}
+.announcement:hover {background:#f7faff}
+.announcement strong {font-size:13px;color:#4b5360;font-weight:500}
+.announcement small {font-size:11px;color:#a1a6ad;margin-top:4px}
+.announcement .notice-date {font:12px "Microsoft YaHei",sans-serif;color:#a1a6ad;flex-basis:85px}
+.announcement>.icon {width:15px;height:15px;color:#bec6d1}
+
+/* 列表：分类标签、集中筛选、细分隔线与交替行。 */
+.categories {gap:0;background:#fff;padding:0 18px;margin:0;border:1px solid #f0f2f6;border-bottom:0;border-radius:8px 8px 0 0;overflow-x:auto;flex-wrap:nowrap}
+.chip {border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:14px 13px;font-size:12px;color:#606266;white-space:nowrap;line-height:1.6}
+.chip.active {background:transparent;color:#2788ef;border-color:#2788ef;font-weight:600}
+.chip:not(:disabled):hover {background:#f7faff;color:#409eff}
+.chip:disabled {opacity:1;color:#b7bbc3}
+.categories+.panel {border-top-left-radius:0;border-top-right-radius:0}
+.filters {padding:16px 20px;gap:12px;border-color:#f0f2f5}
+.search {border-color:#dcdfe6;border-radius:4px;min-width:220px;max-width:440px;padding:0 10px;flex:1}
+.search:focus-within {border-color:#409eff}
+.search input {padding:6px 0;min-height:31px;font-size:12px}
+.search .icon {color:#aeb6c2;width:15px;height:15px}
+.filters select,.panel-head select {border:1px solid #dcdfe6;background:white;border-radius:4px;padding:6px 10px;min-height:32px;font-size:12px;color:#606266;max-width:100%}
+#rowCount {font-size:12px;margin-left:auto;color:#909399}
+.table-wrap {padding:0 20px 4px;min-width:0}
+th {background:#fff;color:#909399;font-size:12px;font-weight:600;letter-spacing:0;padding:13px 12px;border-bottom:1px solid #ebeef5}
+td {font-size:12px;padding:14px 12px;color:#606266;border-bottom:1px solid #ebeef5}
+td strong {font-size:13px;font-weight:500}
+td small {font-size:11px;color:#a1a6ad;margin-top:4px}
+tbody tr:nth-child(even) {background:#fafafa}
+.project-table tr:hover td {background:#f0f7ff}
+.project-table td:first-child {min-width:220px;max-width:350px}
+.project-table td:first-child strong {color:#298cf3;font-weight:600}
+.project-table td:first-child small {font-size:10px}
+.project-table td .btn {padding:3px 0;border:0;background:transparent;color:#409eff;font-size:12px;box-shadow:none}
+.project-table td .btn:hover {color:#1677df;background:transparent;text-decoration:underline}
+.project-table td .btn .icon {display:none}
+.badge {padding:1px 7px;border-radius:3px;font-size:11px;line-height:1.65;color:#409eff;background:#ecf5ff;border:1px solid #d9ecff;font-weight:400}
+.badge.amber {background:#fdf6ec;border-color:#faecd8;color:#ba720b}
+.badge.red {background:#fef0f0;border-color:#fde2e2;color:#e05c5c}
+.badge.green {background:#f0f9eb;border-color:#e1f3d8;color:#59a83a}
+.badge.gray {background:#f4f4f5;border-color:#e9e9eb;color:#909399}
+.sort-note {background:white;padding:12px 20px;border-color:#ebeef5;color:#a1a6ad;font-size:11px}
+.publicity-actions {background:#fafcff;border-color:#ebeef5;padding:14px 20px}
+
+/* 详情：项目概况、流程及材料/办理面板共享同一信息层次。 */
+.project-head {margin-bottom:16px}
+.project-title {padding:18px 20px;gap:14px;align-items:center}
+.project-title h1 {font-size:20px}
+.project-meta {font-size:12px;color:#909399;gap:14px;margin-top:7px}
+.pipeline {padding:20px 12px 23px;scrollbar-width:thin;scrollbar-color:#cdd6e4 transparent;gap:0;align-items:stretch}
+.pipe-step {flex-basis:148px;padding:0 17px;border-color:#edf0f6}
+.pipe-step span {font:12px "Microsoft YaHei",sans-serif;color:#a1a6ad;margin-bottom:8px}
+.pipe-step strong {font-size:13px;color:#606266;font-weight:500;line-height:1.6}
+.pipe-step small {font-size:11px;color:#a1a6ad;margin-top:5px;line-height:1.6}
+.pipe-step b {font:500 24px "Microsoft YaHei",sans-serif;color:#409eff;margin-top:8px}
+.pipe-step.done strong {color:#56a833}
+.pipe-step.done span {color:#85b96a}
+.pipe-step.current {background:#f3f8ff;border-radius:4px}
+.pipe-step.current strong,.pipe-step.current span {color:#2788ee;font-weight:600}
+.pipe-step.current:after {height:2px;background:#409eff;bottom:-20px}
+.pipe-step.future {opacity:.5}
+.project-head .pipeline {padding:16px 10px 22px;border-color:#f0f2f6}
+.project-head .pipe-step {flex-basis:145px}
+.tabs {gap:26px;margin-bottom:16px;background:white;padding:0 20px;border:1px solid #f0f2f6;border-radius:6px;box-shadow:var(--surface-shadow)}
+.tab {padding:13px 0 12px;font-size:13px;color:#606266}
+.tab.active {color:#409eff;border-color:#409eff}
+.material-layout {grid-template-columns:minmax(0,1fr) 345px;gap:16px}
+.material-layout>.task-card {min-width:0}
+.sticky {top:16px}
+.alert {background:#fdf6ec;border-color:#faecd8;color:#a56b1c;padding:12px 14px;border-radius:4px;font-size:12px;margin:16px 0}
+.alert.gray {background:#f4f6f9;border-color:#ebeef5;color:#788391}
+.alert.green {background:#f0f9eb;border-color:#e1f3d8;color:#659650}
+.alert p {font-size:12px}
+.alert .icon {width:16px;height:16px;margin-top:1px}
+.metric-list {gap:30px}
+.metric-list strong {font-size:15px;color:#454c58}
+.empty {padding:40px 20px;color:#a5abb5;font-size:12px}
+.empty .icon {width:36px;height:36px;color:#c5cdd8;stroke-width:1.25}
+
+/* 报告书与附件保持原始内容；只调整控件和只读呈现。 */
+.form-grid {gap:18px 20px}
+.field {min-width:0}
+.field>span {color:#606266;font-size:13px}
+.field input,.field select,.field textarea,input.input,select.select,textarea.textarea {border-color:#dcdfe6;border-radius:4px;padding:7px 10px;font-size:13px;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus {outline:none;border-color:#409eff;box-shadow:0 0 0 2px #409eff0d}
+.field input:disabled,.field select:disabled,.field textarea:disabled {background:#f7f8fa;color:#606266;border-color:#e4e7ed;cursor:default;-webkit-text-fill-color:#606266}
+.field input::placeholder,.field textarea::placeholder {color:#b4b8c0}
+.choice-grid label,.radio-card {border-color:#dcdfe6;border-radius:4px;padding:8px 11px;background:#fff;color:#606266}
+.choice-grid label:has(input:checked),.radio-card:has(input:checked) {border-color:#a0cfff;background:#ecf5ff;color:#2589ed}
+.choice-grid label:has(input:disabled),.radio-card:has(input:disabled) {cursor:default}
+.form-footer {padding:13px 18px;border-color:#ebeef5;border-radius:6px;box-shadow:0 -3px 12px #24395a06;backdrop-filter:none;background:#fff}
+.steps {gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.step-btn {border-color:#e4e7ed;border-radius:4px;padding:8px 12px}
+.step-btn b {font:500 13px "Microsoft YaHei",sans-serif}
+.step-btn.active {border-color:#b3d8ff;color:#409eff;background:#ecf5ff}
+.section-nav .btn.active {border-color:#b3d8ff;color:#409eff;background:#ecf5ff}
+.attach-group {padding:18px 0;border-color:#ebeef5}
+.attach-head strong {color:#454b56;font-size:13px}
+.file-row {background:#f6f7fa;border-color:#f0f2f6;padding:9px 12px;border-radius:4px;gap:10px}
+.file-row .icon {color:#7e899b;width:16px;height:16px}
+.file-empty {color:#b4b9c2}
+.upload-btn {border-color:#b3d8ff;background:#f8fbff;border-radius:4px;color:#409eff;padding:7px 11px}
+.upload-btn:hover {background:#ecf5ff;border-color:#409eff}
+.data-table td,.data-table th {border:1px solid #ebeef5;padding:9px 11px;white-space:normal}
+.data-table th {background:#f5f7fa;color:#747b86}
+.data-table {white-space:normal}
+.source-box {background:#f5f7fa;color:#909399;border-radius:4px}
+.summary-item {background:#f8faff;border-color:#ebeef5;border-radius:6px;padding:16px}
+.summary-item strong {font:500 25px "Microsoft YaHei",sans-serif;color:#409eff}
+.category-grid {gap:16px}
+.category-card {border-color:#e4e7ed;border-radius:8px;padding:23px;min-height:205px;box-shadow:var(--surface-shadow)}
+.category-card:hover:not(:disabled) {border-color:#8ec5ff;box-shadow:0 4px 14px #2275da0d;transform:none}
+.category-card .category-icon {background:#ecf5ff;color:#409eff;border-radius:8px;width:44px;height:44px}
+.category-card strong {font-size:16px}
+.category-card:disabled {background:#f5f7fa;border-color:#ebeef5}
+
+/* 专家评分：蓝色选中态与明确的扣分、证据区域。 */
+.score-toolbar {padding:14px 18px;border-color:#ebeef5;border-radius:6px;box-shadow:var(--surface-shadow);margin-bottom:16px}
+.score-total {font:600 26px "Microsoft YaHei",sans-serif;color:#409eff}
+.score-layout {gap:16px;grid-template-columns:195px minmax(0,1fr)}
+.score-nav {gap:6px;top:90px}
+.score-nav button {padding:11px 13px;border-color:#e4e7ed;border-radius:4px;color:#606266}
+.score-nav button.active {background:#ecf5ff;border-color:#b3d8ff;color:#409eff;box-shadow:inset 3px 0 #409eff}
+.question {padding:20px;margin-bottom:16px}
+.question-head {gap:12px;margin-bottom:12px}
+.question-head h3 {font-size:14px}
+.question>p {color:#909399;line-height:1.8}
+.option {border-color:#e4e7ed;padding:10px 12px;border-radius:4px;color:#606266;gap:8px;line-height:1.75}
+.option:hover {border-color:#b3d8ff;background:#fafcff}
+.option:has(input:checked) {background:#ecf5ff;border-color:#8bc2ff;color:#267bd8}
+.option b {color:#409eff;font-weight:500}
+.question .score-note {gap:12px;margin-top:14px;padding:14px;background:#fafbfc;border-radius:4px}
+.question .score-note .field>span {font-size:12px}
+.question-actions {border-color:#ebeef5;gap:12px;flex-wrap:wrap}
+.required-item {gap:16px;border-color:#ebeef5;padding:14px 0}
+.summer-threshold {background:#ecf5ff;color:#4782b8;border-radius:4px}
+.summer-evaluation-card {border-color:#e4e7ed;background:#fafbfc}
+
+/* 流转记录：竖向时间线，当前意见与往次结果分开。 */
+.records-card>.history-item {position:relative;border:0;margin-left:5px;padding:0 0 24px 24px;border-left:1px solid #dce5f2}
+.records-card>.history-item::before {content:"";position:absolute;left:-5px;top:5px;width:9px;height:9px;background:#409eff;border-radius:50%;box-shadow:0 0 0 3px white}
+.records-card>.history-item:last-of-type {border-left-color:transparent}
+.records-card>.history-item>summary {align-items:flex-start;flex-wrap:wrap;gap:5px 16px;line-height:1.8;list-style:none}
+.records-card>.history-item>summary::-webkit-details-marker {display:none}
+.records-card>.history-item>summary>strong {font-size:13px;color:#4a5260}
+.records-card>.history-item>summary>small {font-size:11px;color:#a1a6ad}
+.records-card>.history-item>summary::after {content:"展开";font-size:11px;color:#409eff;margin-left:auto}
+.records-card>.history-item[open]>summary::after {content:"收起"}
+.history-content {border-color:#dce8f9;color:#606266;font-size:12px;margin-top:12px;margin-left:0;padding-left:14px}
+.history-content .internal {background:#fff8ee;border-color:#f4dfbc;color:#a0773e;border-radius:4px}
+.history-item {border-color:#ebeef5}
+
+/* 弹窗与通用状态。 */
+.overlay {background:#0b1d3859;backdrop-filter:none}
+.modal {border-radius:8px;box-shadow:0 10px 45px #12284d26}
+.modal>header {padding:17px 20px;border-color:#ebeef5;align-items:center}
+.modal>header h2 {font-size:17px;margin-top:3px}
+.modal>header small {font-size:11px;color:#909399}
+.modal-body {padding:20px 22px}
+.modal>footer {padding:13px 20px;border-color:#ebeef5;background:#fff;border-radius:0 0 8px 8px}
+.expert-candidate {border-color:#ebeef5;padding:12px 0}
+.assignment-tools {gap:8px}
+.assignment-tools input,.assignment-tools select {border-color:#dcdfe6;border-radius:4px;font-size:12px;padding:6px 9px}
+.notice-paper {color:#303133}
+.toast {background:#fff;color:#409eff;border:1px solid #d9ecff;border-radius:5px;padding:11px 18px;box-shadow:0 4px 16px #1e3c6014}
+#toasts {top:72px}
+.assistant-trigger {border-radius:6px;font-size:12px;padding:10px 14px;box-shadow:var(--surface-shadow)}
+.phase-deferred,.phase-deferred:disabled {background:#f4f4f5!important;color:#a2a6ae!important;border-color:#e4e7ed!important;box-shadow:none!important}
+.phase-deferred:hover {background:#f4f4f5!important;color:#a2a6ae!important}
+.phase-label {font-size:10px}
+.ocr-bar:has(.phase-deferred) {padding:14px 16px;border-radius:4px;background:#f5f7fa;border-color:#e4e7ed}
+.ocr-bar:has(.phase-deferred) p {color:#a1a6ad}
+
+/* 讲解面板同一蓝灰体系，延后能力仍明确禁用。 */
+.guide-toggle {background:#fff;color:#409eff;border-color:#b3d8ff;font-size:12px}
+.guide-toggle[aria-pressed=true] {background:#ecf5ff;border-color:#b3d8ff;color:#409eff}
+.prototype-guide {background:#f4f6f9;border-color:#e4e7ed;color:#454d5a;box-shadow:-3px 0 14px #12305006}
+.guide-header {height:76px;padding:16px 22px;background:#112548}
+.guide-header h2 {font-size:18px;letter-spacing:0;margin-top:2px}
+.guide-header small {font-size:9px;color:#8ea9d1;letter-spacing:1px}
+.guide-close {width:28px;height:28px;font-size:20px;border-color:#ffffff30;border-radius:4px;color:#b9c9df}
+.guide-context {padding:15px 20px 13px;border-color:#ebeef5}
+.guide-context>span {font-size:12px;color:#606b7d}
+.guide-context p {color:#a1a6ad;font-size:11px;line-height:1.75}
+.guide-tools {padding:10px 20px;font-size:11px;color:#909399}
+.guide-tools input {accent-color:#409eff}
+.guide-scroll {padding:0 14px 18px}
+.guide-card {border-color:#ebeef5;border-radius:6px;padding:15px;margin-bottom:10px;box-shadow:0 1px 5px #203c6003}
+.guide-card.is-active {border-color:#a0cfff;box-shadow:inset 3px 0 #409eff}
+.guide-card-title {gap:9px}
+.guide-card h3 {font-size:13px;line-height:1.7;color:#454f60}
+.guide-code {color:#a1a9b5;letter-spacing:0;font-size:10px}
+.guide-number {background:#ecf5ff;color:#409eff;border:1px solid #d9ecff;font:500 11px/1 "Microsoft YaHei",sans-serif;width:23px;height:23px;border-radius:5px}
+.guide-status {border-color:#faecd8;background:#fdf6ec;color:#b87d25}
+.guide-card p,.guide-card dl {font-size:11px;line-height:1.8;color:#788292}
+.guide-card dt {color:#a1a6ad;font-size:10px}
+.guide-card summary {font-size:11px;color:#7b8b9f}
+.guide-locate {background:#ecf5ff;color:#409eff;border-radius:4px;font-size:11px;padding:5px 10px}
+.guide-footer {border-color:#ebeef5;color:#a1a6ad;padding:12px 16px}
+.guide-footer button {color:#409eff;font-size:11px}
+.guide-detail-card {border-color:#b3d8ff;background:#f8fbff}
+.guide-section {color:#909399;font-size:11px;letter-spacing:0}
+.guide-marker {background:#409eff;color:#fff;border-color:white;font:500 10px/1 "Microsoft YaHei",sans-serif;box-shadow:0 1px 5px #1677df26}
+.guide-marker.active {background:#186bd2}
+.guide-outline {border-color:#409eff;background:#409eff05;box-shadow:0 0 0 3px #409eff15}
+:root .guide-card.is-deferred {background:#f4f4f5;color:#a1a6ad;border-color:#e4e7ed;box-shadow:none}
+.guide-card.is-deferred h3,.guide-card.is-deferred p,.guide-card.is-deferred dd,.guide-card.is-deferred dt,.guide-card.is-deferred .guide-code,.guide-card.is-deferred .guide-locate {color:#a1a6ad}
+.guide-card.is-deferred .guide-status,.guide-card.is-deferred .guide-number {background:#e9ebef;color:#a1a6ad;border-color:#dfe2e8}
+.guide-card.is-deferred .guide-locate {background:#edeff2;color:#a1a6ad}
+.guide-mode .topbar {padding:0 20px}
+.guide-mode #main {padding:18px 18px 56px}
+.guide-mode .topbar-right {gap:10px}
+.guide-mode .topbar-role {display:none}
+.guide-mode .stats {grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.guide-mode .stat {padding:16px}
+.guide-mode .stat-icon {width:29px;height:29px;right:13px;top:15px}
+.guide-mode .stat-icon .icon {width:17px;height:17px}
+.guide-mode .stat>span {font-size:12px}
+.guide-mode .stat strong {font-size:27px}
+.guide-mode .material-layout {grid-template-columns:minmax(0,1fr)}
+.guide-mode .score-layout {grid-template-columns:160px minmax(0,1fr)}
+
+@media(min-width:1600px) {
+  #main {padding:20px 22px 60px}
+  .topbar {padding:0 24px}
+  .project-table td {padding:15px 12px}
+  .stats {gap:16px}
+  .panel-head {padding:17px 20px}
+}
+@media(min-width:1700px) {
+  .guide-mode .material-layout {grid-template-columns:minmax(0,1fr) 320px}
+  .guide-mode .stats {grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:1250px) and (min-width:761px) {
+  .material-layout {grid-template-columns:1fr}
+  .material-layout>.sticky {position:static}
+  .topbar-right #today {display:none}
+  .guide-mode .stats {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .guide-mode .topbar-user #topbarName {display:none}
+  .guide-mode .topbar-role {display:none}
+  .guide-mode .score-layout {grid-template-columns:minmax(0,1fr)}
+  .guide-mode .score-nav {position:static;display:flex;overflow:auto}
+  .guide-mode .score-nav button {width:150px;flex-shrink:0}
+  .guide-mode .score-toolbar {position:static;flex-wrap:wrap}
+  .guide-mode .page-head {flex-wrap:wrap}
+  .guide-mode .form-grid {grid-template-columns:1fr}
+}
+@media(max-width:1100px) and (min-width:761px) {
+  :root {--sidebar-width:195px}
+  .brand {padding:0 10px;gap:7px}
+  .brand-logo {width:32px;height:34px;flex-basis:32px;font-size:20px}
+  .brand strong {font-size:12px}
+  .brand small {font-size:10px}
+  .sidebar {padding:14px 0 18px}
+  .nav-btn {padding-left:16px}
+  .guide-mode .sidebar {width:var(--sidebar-width);padding-left:0;padding-right:0}
+  .guide-mode .brand strong {font-size:12px}
+  .guide-mode .workspace {margin-left:var(--sidebar-width)}
+  .guide-mode #main {padding:16px 14px 56px}
+  .topbar-role {display:none}
+}
+@media(max-width:760px) {
+  .sidebar {position:static;width:100%;padding:12px 0 0;gap:0}
+  .brand {padding:0 16px;margin-bottom:10px}
+  .brand strong {font-size:14px}
+  .identity {margin:0 16px;padding:4px 0 10px;flex-wrap:wrap}
+  .identity select {height:30px}
+  .sidebar nav {padding:0 8px;gap:0}
+  .nav-btn {min-height:42px;padding:10px 12px;border-radius:4px 4px 0 0}
+  .workspace {margin:0}
+  .topbar,.guide-mode .topbar {height:52px;padding:0 14px;gap:8px}
+  #breadcrumb>span {display:none}
+  #breadcrumb {font-size:0;gap:0}
+  #breadcrumb strong {font-size:14px}
+  .topbar-right {gap:8px}
+  .topbar-role,#topbarName {display:none}
+  .avatar {width:26px;height:26px;font-size:11px}
+  #main,.guide-mode #main {padding:14px 12px 60px}
+  .page-head {padding:15px;gap:12px;flex-wrap:wrap;align-items:flex-start;min-height:0}
+  h1 {font-size:18px}
+  .stats,.guide-mode .stats {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stat,.guide-mode .stat {padding:14px}
+  .stat-icon {display:none}
+  .panel-head {padding:15px;flex-wrap:wrap;gap:12px}
+  .panel-body,.task-card {padding:16px}
+  .categories {padding:0 6px}
+  .chip {padding:12px 10px}
+  .table-wrap {padding:0 10px}
+  .filters {padding:14px;gap:10px}
+  .search {max-width:none;min-width:100%}
+  td,th {padding:11px 10px}
+  .project-title {padding:16px}
+  .project-title h1 {font-size:18px}
+  .tabs {gap:22px;padding:0 15px}
+  .tab {font-size:12px}
+  .material-layout,.score-layout,.guide-mode .score-layout {grid-template-columns:1fr}
+  .form-grid,.guide-mode .form-grid {grid-template-columns:1fr}
+  .task-heading {flex-wrap:wrap}
+  .question {padding:16px}
+  .question .score-note {grid-template-columns:1fr;padding:10px}
+  .score-toolbar {position:static;flex-wrap:wrap;padding:12px}
+  .required-item {flex-direction:column}
+  .metric-list {gap:18px;flex-wrap:wrap}
+  .modal-body {padding:16px}
+  .modal>header,.modal>footer {padding:14px 16px}
+  .guide-header {height:auto;min-height:52px;padding:10px 16px}
+  .guide-header h2 {font-size:15px}
+  .guide-context {padding:8px 16px}
+  .guide-tools {padding:8px 16px}
+  .prototype-guide {border-top-color:#1677df}
+}
+@media(prefers-reduced-motion:reduce) {
+  button,a,input,select,textarea {transition:none}
+}
+
+/* 办理与过程合一、专家选择及本期规则配置 */
+[hidden]{display:none!important}
+.stat-link{font:inherit;text-align:left;color:inherit;cursor:pointer;width:100%;appearance:none}
+.stat-link:hover{border-color:#86add9;box-shadow:0 3px 12px #1e518b12}
+.stat-link:focus-visible{outline:3px solid #80b5ee;outline-offset:2px}
+.project-utility{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}
+.project-work-area{margin-bottom:24px}
+.records-card{scroll-margin-top:80px}
+.selected-panel{padding:14px 16px;border:1px solid #bdd4ec;background:#f3f8fe;border-radius:7px;margin:16px 0}
+.selected-experts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.selected-experts .chip{background:#fff;color:#235e9a;border-color:#abc8e6}
+.expert-candidate.selected{border-color:#87b1dc;background:#f4f8fe}
+.assignment-tools>div{display:grid;gap:5px}
+.assignment-tools label{display:flex;align-items:center;gap:10px}
+.assignment-tools input[type=number]{width:84px}
+.signature-methods{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:18px 0}
+.signature-methods>section{border:1px solid #dbe4ef;border-radius:8px;padding:18px}
+#signatureQr svg{display:block;max-width:240px;width:100%;height:auto;margin:16px auto}
+.signature-preview{max-width:300px;max-height:160px;object-fit:contain;background:white;border:1px solid #d5dfec;padding:8px}
+.section-nav{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px}
+#previousForm input:disabled,#previousForm textarea:disabled,#previousForm select:disabled{color:#30475e;background:#f5f7fa;opacity:1}
+.filters label:not(.search){display:grid;gap:6px;font-size:13px}
+@media(max-width:760px){.signature-methods{grid-template-columns:1fr}.assignment-tools{flex-wrap:wrap}.project-utility .btn{flex:1;white-space:nowrap}}
+.score-dock{position:sticky;top:0;z-index:8;background:#fff;border:1px solid #ebeef5;border-radius:6px;box-shadow:var(--surface-shadow);margin-bottom:20px}
+.score-dock .score-toolbar{position:static;margin:0;border:0;box-shadow:none;flex-wrap:wrap}
+.score-dock .actions{flex-wrap:wrap}
+.score-rule-tabs{display:flex;gap:28px;padding:0 18px;border-top:1px solid #ebeef5;overflow-x:auto}
+.score-rule-tabs button{flex-shrink:0;background:transparent;border:0;border-bottom:3px solid transparent;padding:14px 2px 11px;color:#606266;font:inherit;font-size:14px;cursor:pointer}
+.score-rule-tabs button[aria-selected=true]{color:#1677df;border-bottom-color:#1677df;font-weight:600}
+.score-rule-tabs button:focus-visible{outline:2px solid #80b5ee;outline-offset:-3px}
+.score-review .score-nav{top:calc(var(--score-dock-height,140px) + 16px)}
+.score-opinion{margin-top:20px}
+.previous-remarks .history-item{border-left:3px solid #bfd8f2;padding-left:18px}
+.previous-remarks .remark-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}
+.pipe-step-link{appearance:none;border:0;border-right:1px solid #edf0f6;background:transparent;font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background-color .15s}
+.pipe-step-link:hover{border-color:#409eff;background:#ecf5ff}
+.pipe-step-link:focus-visible{outline:2px solid #409eff;outline-offset:-3px}
+.pipe-step-link .pipe-step-link-hint{color:#1677df;margin-top:8px}
+@media(max-width:760px){.score-rule-tabs{gap:20px;padding:0 12px}.score-rule-tabs button{font-size:13px}.score-dock .actions{gap:8px}}
