@@ -1,7 +1,7 @@
 'use strict';
 // Table publication and node bindings are independent of the legacy stage rule store.
 // Existing submitted sheets retain their original renderer and immutable raw scores.
-const SM_NODE_KEYS=['initial','document','meeting','hall','creation','field','committee','publicity'];
+const SM_NODE_KEYS=['initial','document','document-summary','meeting','hall','creation','field','committee','publicity'];
 const smEntry=id=>db.scoringLibrary.tables[id];
 const smAll=(draft=false)=>Object.values(db.scoringLibrary.tables).map(entry=>draft&&entry.draft||entry.published);
 const smTable=(id,draft=false)=>draft&&smEntry(id)?.draft||smEntry(id)?.published;
@@ -164,7 +164,7 @@ function smInitialize(){
     return content;
   };
   const originalFinish=finishScore;finishScore=()=>{const p=getProject(),sheet=p&&['meeting','field'].includes(p.stage)?sheetFor(p,p.stage):null;return sheet?.scoringMethod?smFinish():originalFinish();};
-  const originalSignature=signatureDialog;signatureDialog=(project,sheet)=>{originalSignature(project,sheet);if(sheet.scoringMethod&&sheet.mountedResults?.every(result=>result.kind==='qualification'))document.querySelector('#modalBody .alert').innerHTML=`<p>本阶段结论：${sheet.result==='fail'?'未通过':'通过'}。提交后锁定本人评分方式、意见与签字。</p>`;};
+  const originalSignature=signatureDialog;signatureDialog=(project,sheet)=>{originalSignature(project,sheet);if(sheet.scoringMethod&&sheet.mountedResults?.every(result=>result.kind==='qualification'))document.querySelector('#modalBody .alert').innerHTML=`<p>题表核验记录：${sheet.result==='fail'?'存在未达标项':'已达标'}，不代表审批结论。提交后锁定本人评分方式、意见与签字；省厅另行人工判定。</p>`;};
   const originalTotal=scoreTotal;scoreTotal=sheet=>sheet.scoringMethod&&sheet.mountedResults?sheet.mountedResults.filter(result=>result.kind==='numeric').reduce((sum,result)=>sum+Number(result.value),0):originalTotal(sheet);
   const originalRecord=scoreRecordModal;scoreRecordModal=(stage,id)=>getProject()?.sheets[stage]?.[id]?.scoringMethod?smRecord(stage,id):originalRecord(stage,id);
   const originalScoreTable=scoreTable;scoreTable=(project,stage)=>{let content=originalScoreTable(project,stage);const refs=project.nodeScoreBindings?.[stage];if(refs){const total=refs.map(ref=>smVersion(ref.tableId,ref.version)).filter(table=>table?.kind==='numeric').reduce((sum,table)=>sum+table.total,0);content=content.replace(/(?:景观质量评分 · 满分100分|现场评分 · 满分1000分)/,total?'评分表汇总 · 满分'+total+'分':'评审结论与线下材料');}return content;};

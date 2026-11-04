@@ -75,7 +75,7 @@ function validateAction(action){
     'save-expert':['expertName','expertPhone','expertOrg','expertAccount'],
     'submit-extension':['extensionDate','extensionReason'],
     'submit-publicity':['publicityStart','publicityEnd','publicityChannel','publicityContact'],
-    'save-objection':['unresolved'],
+    'save-objection':['objectionProject','objectionContent'],
     'save-rule':['ruleTitle','ruleKind','ruleMax'],
     'save-measure':['measureValue']
   };
@@ -98,7 +98,6 @@ function validateAction(action){
   if(action==='request-field'&&!project.creationPlan?.length&&state.role==='city')return fail('请先上传创建方案','[data-upload="creationPlan"]');
   if(action==='submit-extension'&&read('extensionDate')<=project.creationEnd)return fail('延期日期须晚于创建期结束日期',fieldSelector('extensionDate'));
   if(action==='submit-publicity'&&read('publicityEnd')<workingEnd(read('publicityStart')))return fail('公示期不能少于7个工作日',fieldSelector('publicityEnd'));
-  if(action==='save-objection'&&(!Number.isInteger(Number(read('unresolved')))||Number(read('unresolved'))<0))return fail('异议数量须为非负整数',fieldSelector('unresolved'));
   if(action==='save-settings'){
     const year=Number(read('configYear'));if(!Number.isInteger(year)||year<2025||year>2100)return fail('申报年度须为2025至2100的整数',fieldSelector('configYear'));
     const type=read('configCategory');if(!cat(type))return fail('请选择申创类别',fieldSelector('configCategory'));

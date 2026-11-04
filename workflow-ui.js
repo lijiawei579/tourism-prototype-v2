@@ -36,7 +36,7 @@ function updateAssignmentSelection(){
 }
 function assignmentDialog(){
   const p=getProject();if(state.role!=='hall'||['draft','done','failed','initial'].includes(p.stage))return toast('当前环节不能指派专家。');
-  const stage=state.assignment?.stage||(['document','meeting','field'].includes(p.stage)?p.stage:p.stage==='hall'?'meeting':'field');
+  const stage=state.assignment?.stage||(['document','meeting','field'].includes(p.stage)?p.stage:p.stage==='document-summary'?'document':p.stage==='hall'?'meeting':'field');
   const selected=state.assignment?.selected||new Set(p.assigned[stage]?.length?p.assigned[stage]:stage==='field'?p.assigned.meeting||p.assigned.document||[]:[]);
   state.assignment={stage,selected,count:state.assignment?.count||selected.size||(stage==='document'?3:7)};
   const a=state.assignment;
@@ -113,16 +113,28 @@ function saveRule(){
 }
 function publishRules(){if(state.role!=='admin')return;const stage=state.rulesStage||'meeting',r=db.ruleDrafts?.[stage];if(!r)return toast('当前没有未发布修改');const sum=r.majors.reduce((n,m)=>n+m.questions.reduce((s,q)=>s+q.max,0),0);if(sum!==(stage==='meeting'?100:1000))return toast(`发布前总分须为${stage==='meeting'?100:1000}分，当前${sum}分`);const version=publishedRule(stage).version+1;const snapshot={...clone(r),id:'scenic-'+stage+'-v'+version,version,at:new Date().toLocaleString('zh-CN'),by:person()};db.ruleVersions??={};(db.ruleVersions[stage]??=[]).push(snapshot);delete db.ruleDrafts[stage];save();render();toast('规则已发布，已开始阶段及历史评分保持原版本');}
 
-// 公示按批次完成：结束日期与每个项目的异议都满足才归档。
+function documentSummaryTask(p){
+  if(state.role!=='hall')return waiting(p,'等待省厅资料审核意见汇总','专家审核已完成，由省厅汇总决定补证或进入专家会议评审。');
+  const s=summary(p,'document');
+  return `<section class="task-card"><h2>省厅资料审核意见汇总</h2><p>${s.completed.length} / ${s.total} 位专家已提交意见，原始意见只读。</p>${reviewTable(p)}<div class="alert gray"><p>本节点由省厅人工办理。补证提交后仍返回本汇总节点，不回到初审，也不覆盖专家原始意见。</p></div><div class="radio-group"><label class="radio-card"><input type="radio" name="documentDecision" value="proceed" checked><span>进入${p.type==='scenic'?'线下专家会议评审':'现场创建期'}</span></label><label class="radio-card"><input type="radio" name="documentDecision" value="supplement"><span>退回市州补充材料</span></label></div>${field('documentComment','省厅汇总办理意见 *')}${field('correctionDays','补正时限（天）','number',10)}<div class="footer">${primary('提交办理决定','submit-document-hall')}</div></section>`;
+}
+function objectionRecords(p){return (p.publicity?.objections||[]).map(o=>`<article class="history-item"><strong>${esc(p.name)}</strong><p class="remark-text">${esc(o.content)}</p><small>${esc(o.at)} · ${esc(o.actor)}</small></article>`).join('')||'<p class="muted">未登记异议。</p>';}
+function archiveResultPanel(p){
+  return `<section class="task-card"><h2>${p.stage==='failed'?'本次申报未通过，已归档':esc(stageLabel(p))}</h2><p>申报材料、专家原始评分及办理过程已归档，只读保留。</p>${p.publicity?.completed?`<h3>公示异议记录（${p.publicity.objections?.length||0}条）</h3>${objectionRecords(p)}<div class="alert gray"><p>公示期满即归档，不因异议阻塞。系统不判定申创成功，归档结论由省厅人工确认。</p></div>${p.archiveDecision?`<h3>省厅人工确认结论</h3><p>${p.archiveConclusion==='failure'?'申创未通过':'申创成功'}：${esc(p.archiveDecision.comment)}</p><small>${esc(p.archiveDecision.actor)} · ${esc(p.archiveDecision.at)}</small>`:p.archiveConclusion==='pending'&&state.role==='hall'?primary('人工确认归档结论','archive-conclusion'):''}`:''}</section>`;
+}
+function archiveConclusionModal(){const p=getProject();if(state.role!=='hall'||p?.archiveConclusion!=='pending'||!p.publicity?.completed)return;
+  openModal('人工确认归档结论',p.name,`<div class="alert gray"><p>项目已归档。本操作只补充人工结论，不重新开启流程、不修改专家分数。请结合公示及异议记录审慎判断。</p></div>${objectionRecords(p)}<label class="field"><span>申创结论 *</span><select name="archiveOutcome"><option value="">请选择人工结论</option><option value="success">申创成功</option><option value="failure">申创未通过</option></select></label>${field('archiveReason','人工判断依据 *','textarea','','填写结论依据及异议核验情况')}`,button('取消','close-modal')+primary('确认结论并保留归档','save-archive-conclusion'));
+}
+// 公示期满逐项目归档；异议和申创结论互相独立，不以异议数阻塞归档。
 function completeEligiblePublicity(){
-  let changed=false;const batches=new Set(db.projects.filter(p=>p.stage==='publicity'&&p.publicity).map(p=>p.publicity.batch));
-  for(const batch of batches){const rows=db.projects.filter(p=>p.stage==='publicity'&&p.publicity?.batch===batch);if(!rows.length||rows.some(p=>today()<=p.publicity.end||Number(p.publicity.unresolved)!==0))continue;
-    for(const p of rows){record(p,'完成公示，申创成功！','公示期已结束，实名异议已处理完毕，系统自动归档。',{actor:'系统',automatic:true});p.publicity.completed=true;p.stage='done';}
-    db.notices.unshift({title:'关于确定'+rows.map(p=>p.name).join('、')+'评定结果的公告',type:'评定公告',date:today(),body:'本批项目已完成公示，异议处理完毕，现公告评定结果。',projectIds:rows.map(p=>p.id)});changed=true;
+  let changed=false;
+  for(const p of db.projects){if(p.stage!=='publicity'||!p.publicity||today()<=p.publicity.end)continue;
+    record(p,'公示期满归档','公示期已结束，异议记录随项目归档。申创结论待省厅人工确认，系统不作通过判定。',{actor:'系统',automatic:true});
+    p.publicity.completed=true;p.publicity.archivedAt=today();p.publicity.objections??=[];p.archiveConclusion='pending';p.stage='done';changed=true;
   }if(changed)save();return changed;
 }
 function signatureDialog(p,sh){
-  openModal('专家签字并提交',STAGES[p.stage][0],`<div class="alert green"><p>${sh.result==='fail'?'本阶段结论为未通过，仍可签字提交':`本人得分 ${scoreTotal(sh)} 分`}。提交后锁定本人评分与签字。</p></div><div class="signature-methods"><section><h3>手机扫码签字</h3><p>打开二维码，用手机手写签名。</p>${primary(icon('qr-code')+'生成签字二维码','signature-qr')}<div id="signatureQr"></div></section><section><h3>上传签字图片</h3><p>也可上传本人PNG/JPG签字图片，限2MB。</p><label class="upload-btn">选择签字图片<input type="file" id="signatureFile" accept="image/png,image/jpeg"></label></section></div><div id="signaturePreview">${sh.signature?.data?`<img class="signature-preview" src="${sh.signature.data}" alt="专家签字">`:''}</div><p class="helper">前端演示支持同浏览器手机签字预览回传；真实手机跨设备同步待后端集成。签字不出现在回避确认中。</p>`,button('返回评分','close-modal')+primary('签字并提交评分','submit-score'));
+  openModal('专家签字并提交',STAGES[p.stage][0],`<div class="alert green"><p>本人客观评分 ${scoreTotal(sh)} 分${sh.result==='fail'?'，含未达标项或低于参考分值':''}。此处不作审批判定，仍可签字提交，由省厅人工形成结论。提交后锁定本人评分与签字。</p></div><div class="signature-methods"><section><h3>手机扫码签字</h3><p>打开二维码，用手机手写签名。</p>${primary(icon('qr-code')+'生成签字二维码','signature-qr')}<div id="signatureQr"></div></section><section><h3>上传签字图片</h3><p>也可上传本人PNG/JPG签字图片，限2MB。</p><label class="upload-btn">选择签字图片<input type="file" id="signatureFile" accept="image/png,image/jpeg"></label></section></div><div id="signaturePreview">${sh.signature?.data?`<img class="signature-preview" src="${sh.signature.data}" alt="专家签字">`:''}</div><p class="helper">前端演示支持同浏览器手机签字预览回传；真实手机跨设备同步待后端集成。签字不出现在回避确认中。</p>`,button('返回评分','close-modal')+primary('签字并提交评分','submit-score'));
 }
 function createSignatureQR(){
   if(state.role!=='expert'||!canHandle(getProject()))return;const token=crypto.randomUUID(),p=getProject(),url=new URL('signature.html',location.href);url.searchParams.set('token',token);url.searchParams.set('expert',person());url.searchParams.set('project',p.name);
@@ -156,6 +168,14 @@ function initializeWorkflowUI(){
     if(a==='discard-rules'&&state.role==='admin'){delete (db.ruleDrafts||{})[state.rulesStage||'meeting'];save();render();}
     if(a==='rule-versions'){const rows=db.ruleVersions?.[state.rulesStage||'meeting']||[];openModal('评分规则发布记录','已开始阶段使用绑定的历史版本',rows.map(v=>`<div class="history-item"><h3>V${v.version}</h3><p>${esc(v.at)} · ${esc(v.by)}</p></div>`).join('')||empty('当前仅使用正式细则基线V0。'));}
     if(a==='signature-qr')createSignatureQR();
+    if(a==='archive-conclusion')archiveConclusionModal();
+    if(a==='save-archive-conclusion'){
+      const p=getProject(),outcome=read('archiveOutcome'),comment=read('archiveReason');
+      if(state.role!=='hall'||p?.archiveConclusion!=='pending'||!p.publicity?.completed)return;
+      if(!['success','failure'].includes(outcome))return validationError('请选择人工结论','[name="archiveOutcome"]');
+      if(!comment)return validationError('请填写人工判断依据','[name="archiveReason"]');
+      confirm('确认归档结论',`<p>${esc(p.name)}：${outcome==='success'?'申创成功':'申创未通过'}。确认后结论只读，异议记录永久保留。</p>`,()=>{if(p.archiveConclusion!=='pending')return;p.archiveConclusion=outcome;p.archiveDecision={outcome,comment,actor:person(),at:new Date().toLocaleString('zh-CN',{hour12:false})};record(p,'省厅人工确认归档结论：'+(outcome==='success'?'申创成功':'申创未通过'),comment);p.stage=outcome==='success'?'done':'failed';save();closeModal();navigate('archive');});
+    }
   });
   document.addEventListener('click',e=>{const b=e.target.closest('[data-action]'),past=b?.closest('[data-history-project]');if(!past)return;const action=b.dataset.action;if(!['score-record','stage-records','preview-file','download-file','previous'].includes(action))return;e.stopImmediatePropagation();withHistoricalProject(past.dataset.historyProject,()=>{const p=getProject();if(action==='score-record')scoreRecordModal(b.dataset.stage,b.dataset.expert);else if(action==='stage-records')openModal(STAGES[b.dataset.stage][0]+'评分汇总',p.name,historicalContent(p,scoreTable(p,b.dataset.stage)),'',null,true,true);else if(action==='previous')toast('正在查看往次申请；关闭弹窗可返回本次办理。');else fileAction(action,b.dataset.fileKey,Number(b.dataset.index));});},true);
   document.addEventListener('change',e=>{if(['initialDecision','documentDecision'].includes(e.target.name))toggleCorrectionFields();if(e.target.id==='assignmentCount'){state.assignment.count=Number(e.target.value);updateAssignmentSelection();}if(e.target.id==='rulesStage'){state.rulesStage=e.target.value;state.rulesPage=0;state.rulesQuery='';render();}});

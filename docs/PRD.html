@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>旅游品牌申创 V2 · 详细PRD</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#303133;font:15px/1.9 "Microsoft YaHei",sans-serif}nav{position:fixed;width:240px;top:0;bottom:0;padding:32px 22px;overflow:auto;background:#112548;color:#e6eefb}nav strong{font-size:18px}nav small{display:block;color:#8ea9d1;margin:8px 0 24px}nav a{display:block;color:#cbd7e9;font-size:12px;padding:7px 0;text-decoration:none}main{margin-left:240px;padding:45px 5vw 100px;max-width:1450px}h1{font-size:30px;border-bottom:3px solid #409eff;padding-bottom:22px}h2{font-size:25px;padding-top:32px;margin-top:42px;border-top:1px solid #dcdfe6;scroll-margin:25px}h3{font-size:21px;margin-top:35px;color:#1677df}h4{font-size:18px;margin-top:30px}h5,h6{font-size:15px;margin-top:25px}table{border-collapse:collapse;width:100%;background:white;font-size:12px;margin:18px 0;display:block;overflow-x:auto}td,th{border:1px solid #ebeef5;padding:9px 11px;vertical-align:top;text-align:left}th{background:#f5f7fa;white-space:nowrap}code{font-size:12px;background:#eef4fc;padding:2px 4px;overflow-wrap:anywhere}li{margin:5px 0}button{padding:8px 15px;background:white;border:1px solid #dcdfe6;color:#1677df;border-radius:4px;cursor:pointer}.doc-actions{display:flex;gap:12px;align-items:center}.doc-actions a{color:#1677df}p,li{overflow-wrap:anywhere}@media(max-width:900px){nav{position:static;width:auto;height:auto;max-height:220px}main{margin:0;padding:25px 18px}}@media print{nav,.doc-actions{display:none}main{margin:0;padding:0;max-width:none}body{background:white;font-size:10pt}h1{font-size:22pt}h2{break-before:page}table{display:table;font-size:8pt}h3,h4,h5,h6{break-after:avoid}a{color:inherit;text-decoration:none}}</style></head><body><nav><strong>V2 · 产品需求文档</strong><small>2026.11.04 · 140个交互节点</small><a href="#section-2">1. 产品定位与目标</a><a href="#section-3">2. 用户与权限</a><a href="#section-4">3. 信息架构与页面</a><a href="#section-5">4. 业务状态与迁移</a><a href="#section-6">5. 表单、附件与评分的通用规则</a><a href="#section-7">6. 详细交互节点</a><a href="#section-8">7. 数据结构与接口要求</a><a href="#section-9">8. 原型讲解模式的交互规范</a><a href="#section-10">9. 非功能要求与上线门槛</a><a href="#section-11">10. 与上线目标的差距与优先级</a><a href="#section-12">11. 验收用例矩阵</a><a href="#section-13">12. 版本维护与追溯</a><a href="#section-14">附录A. 本期景区申报报告书字段字典</a><a href="#section-15">附录B. 附件目录与上传说明</a><a href="#section-16">附录C. 4A级旅游景区分阶段评分规则</a><a href="#section-17">附录D. 后续类别扩展说明</a><a href="#section-18">附录E. 文件与能力追溯</a><a href="#section-19">原文初始配置清单（仅作基线对照，可配置调整）</a><a href="#section-21">细则一 · 质量等级划分前提条件</a><a href="#section-22">细则二 · 旅游资源价值评分</a><a href="#section-23">细则三 · 旅游设施与服务质量评分</a><a href="#section-24">历史设计文档（已被当前题库与题表PRD覆盖）</a><a href="#section-25">题库与题表配置PRD（2026-11-04）</a><a href="#section-26">1. 产品关系</a><a href="#section-27">2. 页面与功能</a><a href="#section-28">3. 整表计分</a><a href="#section-29">4. 配置总结</a><a href="#section-30">5. 节点行为与历史</a><a href="#section-31">6. 数据及实现边界</a><a href="#section-32">7. P0验收</a></nav><main><div class="doc-actions"><a href="../index.html?explain=1">← 返回原型讲解</a><a href="PRD.md" download>下载Markdown</a><button onclick="window.print()">打印 / 另存PDF</button></div><h1 id="section-1">旅游品牌申创管理系统 V2 · 产品需求文档</h1>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>旅游品牌申创 V2 · 详细PRD</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#303133;font:15px/1.9 "Microsoft YaHei",sans-serif}nav{position:fixed;width:240px;top:0;bottom:0;padding:32px 22px;overflow:auto;background:#112548;color:#e6eefb}nav strong{font-size:18px}nav small{display:block;color:#8ea9d1;margin:8px 0 24px}nav a{display:block;color:#cbd7e9;font-size:12px;padding:7px 0;text-decoration:none}main{margin-left:240px;padding:45px 5vw 100px;max-width:1450px}h1{font-size:30px;border-bottom:3px solid #409eff;padding-bottom:22px}h2{font-size:25px;padding-top:32px;margin-top:42px;border-top:1px solid #dcdfe6;scroll-margin:25px}h3{font-size:21px;margin-top:35px;color:#1677df}h4{font-size:18px;margin-top:30px}h5,h6{font-size:15px;margin-top:25px}table{border-collapse:collapse;width:100%;background:white;font-size:12px;margin:18px 0;display:block;overflow-x:auto}td,th{border:1px solid #ebeef5;padding:9px 11px;vertical-align:top;text-align:left}th{background:#f5f7fa;white-space:nowrap}code{font-size:12px;background:#eef4fc;padding:2px 4px;overflow-wrap:anywhere}li{margin:5px 0}button{padding:8px 15px;background:white;border:1px solid #dcdfe6;color:#1677df;border-radius:4px;cursor:pointer}.doc-actions{display:flex;gap:12px;align-items:center}.doc-actions a{color:#1677df}p,li{overflow-wrap:anywhere}@media(max-width:900px){nav{position:static;width:auto;height:auto;max-height:220px}main{margin:0;padding:25px 18px}}@media print{nav,.doc-actions{display:none}main{margin:0;padding:0;max-width:none}body{background:white;font-size:10pt}h1{font-size:22pt}h2{break-before:page}table{display:table;font-size:8pt}h3,h4,h5,h6{break-after:avoid}a{color:inherit;text-decoration:none}}</style></head><body><nav><strong>V2 · 产品需求文档</strong><small>2026.11.04 · 142个交互节点</small><a href="#section-2">1. 产品定位与目标</a><a href="#section-3">2. 用户与权限</a><a href="#section-4">3. 信息架构与页面</a><a href="#section-5">4. 业务状态与迁移</a><a href="#section-6">5. 表单、附件与评分的通用规则</a><a href="#section-7">6. 详细交互节点</a><a href="#section-8">7. 数据结构与接口要求</a><a href="#section-9">8. 原型讲解模式的交互规范</a><a href="#section-10">9. 非功能要求与上线门槛</a><a href="#section-11">10. 与上线目标的差距与优先级</a><a href="#section-12">11. 验收用例矩阵</a><a href="#section-13">12. 版本维护与追溯</a><a href="#section-14">附录A. 本期景区申报报告书字段字典</a><a href="#section-15">附录B. 附件目录与上传说明</a><a href="#section-16">附录C. 4A级旅游景区分阶段评分规则</a><a href="#section-17">附录D. 后续类别扩展说明</a><a href="#section-18">附录E. 文件与能力追溯</a><a href="#section-19">原文初始配置清单（仅作基线对照，可配置调整）</a><a href="#section-21">细则一 · 质量等级划分前提条件</a><a href="#section-22">细则二 · 旅游资源价值评分</a><a href="#section-23">细则三 · 旅游设施与服务质量评分</a><a href="#section-24">历史设计文档（已被当前题库与题表PRD覆盖）</a><a href="#section-25">题库与题表配置PRD（2026-11-04）</a><a href="#section-26">1. 产品关系</a><a href="#section-27">2. 页面与功能</a><a href="#section-28">3. 整表计分</a><a href="#section-29">4. 配置总结</a><a href="#section-30">5. 节点行为与历史</a><a href="#section-31">6. 数据及实现边界</a><a href="#section-32">7. P0验收</a></nav><main><div class="doc-actions"><a href="../index.html?explain=1">← 返回原型讲解</a><a href="PRD.md" download>下载Markdown</a><button onclick="window.print()">打印 / 另存PDF</button></div><h1 id="section-1">旅游品牌申创管理系统 V2 · 产品需求文档</h1>
 <blockquote>
-<p>当前口径：V2.9 · 2026-11-04。本期仅4A景区；题库可修订内容与题分，题表外层配置计分、总分、门槛和节点。旧固定三表/固定总分限制已取消；已开始节点与专家历史原始分不追溯修改。</p>
+<p>当前口径：V2.10 · 2026-11-04。本期仅4A景区；资料审核全员完成后进入独立省厅汇总节点。系统只展示评分，不代替人工审批；公示期满均归档，异议关联景区保留，归档结论由省厅人工确认。题库及题表配置、历史原分冻结规则不变。</p>
 </blockquote>
-<p>版本：V2.9（题库、可配置题表与节点绑定版）<br>更新日期：2026年11月4日<br>状态：OCR演示识别、默认填写、模拟上传、景区边界与资源清单全流程演示已开放；真实后端待集成范围不变。<br>适用终端：桌面 Web；窄屏提供适配，不等同于已交付独立手机应用。<br>范围：旅游品牌申创模块优化，不替换原平台基础管理服务。</p>
+<p>版本：V2.10（省厅意见汇总与公示归档修订版）<br>更新日期：2026年11月4日<br>状态：OCR演示识别、默认填写、模拟上传、景区边界与资源清单全流程演示已开放；真实后端待集成范围不变。<br>适用终端：桌面 Web；窄屏提供适配，不等同于已交付独立手机应用。<br>范围：旅游品牌申创模块优化，不替换原平台基础管理服务。</p>
 <h2 id="section-2">1. 产品定位与目标</h2>
 <p>系统以“一个景区、一次年度申请、一套材料、贯穿全程的办理记录”为中心，服务市州申创、省厅审理及专家独立评审。支持分类填报、完整性初审、专家资料审核、会议评分、厅方综合复审、现场创建、现场评审、上会、公示和归档。资源、政策、材料检索是业务内辅助能力，不另建脱离项目的审批链路。</p>
 <p>核心目标：</p>
@@ -79,7 +79,7 @@
 <li>正式办理完成通常返回项目列表；初审通过先保存待指派并直接开指派窗，取消回工作台，确认指派后回列表，不遗留可重复提交表单。</li>
 <li>100%未来阶段只在流程条展示，不出现提前可编辑的评分/复审/上会表单。</li>
 <li>100%已提交评分可追溯专家、阶段、选项、分数、说明、签字和提交时间；不可编辑。</li>
-<li>公示未结束或有未处理实名异议的项目，不能确认申创成功。</li>
+<li>公示未结束不能归档；期满无论有无异议均归档，申创成功与否由省厅人工确认，系统只保留客观结果与异议记录。</li>
 <li>申报方、专家页面及公开公告不包含厅方内部备注；申报方不获取专家原始评分。</li>
 <li>新建入口先选类别，所有可用类别均可保存草稿；禁用类别不能建项目。</li>
 <li>常用单项选择和打分局部更新，不导致全页刷新、滚动位置跳回顶部；AI检索/智能助手本期禁用，OCR开放演示识别与人工核对回填。</li>
@@ -210,20 +210,20 @@
 <tr>
 <td>PG-05</td>
 <td><code>#project/{projectId}</code></td>
-<td>当前办理、申报材料、办理记录</td>
-<td>P01—P06及当前阶段节点</td>
+<td>当前办理、申报材料、办理记录；资料审核全员完成后显示独立省厅汇总页</td>
+<td>P01—P06、D04—D06、D08及当前阶段节点</td>
 </tr>
 <tr>
 <td>PG-06</td>
 <td><code>#publicity</code></td>
-<td>等待公示/公示中，分类批量办理</td>
+<td>等待公示/公示中，分类批量办理及按景区登记异议</td>
 <td>B01—B08</td>
 </tr>
 <tr>
 <td>PG-07</td>
 <td><code>#archive</code></td>
-<td>成功/未通过已办结项目、只读历史</td>
-<td>P04—P06、S15</td>
+<td>期满已归档待人工确认、成功归档、未通过归档；材料与历史只读，省厅可补充一次人工结论</td>
+<td>P04—P06、S15、B09</td>
 </tr>
 <tr>
 <td>PG-08</td>
@@ -274,9 +274,9 @@
 </ul>
 <h2 id="section-5">4. 业务状态与迁移</h2>
 <h3>4.1 分类主链路</h3>
-<p>4A级旅游景区：申报填报 → 厅方初审 → 专家资料审核（含厅方意见汇总）→ 线下专家会议评审 → 省文旅厅复审 → 现场创建期 → 现场评审 → 上会审定 → 评定结果公示 → 归档。</p>
+<p>4A级旅游景区：申报填报 → 厅方初审 → 专家资料审核 → 省厅资料审核意见汇总 → 线下专家会议评审 → 省文旅厅复审 → 现场创建期 → 现场评审 → 上会审定 → 评定结果公示 → 归档（省厅人工确认申创结论）。</p>
 <p>其他类别原有流程仅作存量兼容保留，本期不展示、不生成其演示案例。</p>
-<p>进入创建期不公示。上会结束先为“等待结果公示”，公示期结束且异议结清才为“完成公示，申创成功！”。</p>
+<p>进入创建期不公示。上会结束先为“等待结果公示”；公示期满统一归档，异议关联具体景区留存。归档后由省厅人工确认“申创成功”或“申创未通过”，两者均不重新开启流程。系统不依据分值或异议数自动决定通过。</p>
 <h3>4.2 状态迁移表</h3>
 <table>
 <thead>
@@ -315,19 +315,19 @@
 <td>document审核中</td>
 <td>专家逐人提交</td>
 <td>已回避确认，意见必填</td>
-<td>不改项目阶段；全员完成后厅方决定可用</td>
+<td>未齐继续等待；全员完成进入document-summary</td>
 </tr>
 <tr>
-<td>document意见汇齐</td>
+<td>document-summary意见汇总</td>
 <td>厅方要求补证</td>
 <td>意见、时限</td>
-<td>document+correction；补回后仍由厅方处理</td>
+<td>document-summary+correction；市州补回后仍由本汇总节点省厅处理</td>
 </tr>
 <tr>
-<td>document意见汇齐</td>
+<td>document-summary意见汇总</td>
 <td>厅方同意推进</td>
-<td>所有当前受派专家提交</td>
-<td>景区→meeting；其他开放类别→creation</td>
+<td>所有当前受派专家提交，汇总意见必填</td>
+<td>景区→meeting；专家原始意见只读保留</td>
 </tr>
 <tr>
 <td>meeting</td>
@@ -397,9 +397,15 @@
 </tr>
 <tr>
 <td>publicity公示中</td>
-<td>系统本地自动检查</td>
-<td>当前日晚于结束日、本批每个项目无未结异议</td>
-<td>done整批归档，生成评定公告，不再人工点击完成</td>
+<td>系统本地日期检查</td>
+<td>当前日晚于结束日；不检查异议数</td>
+<td>done归档，archiveConclusion=pending，异议记录随项目保留；不自动判成功</td>
+</tr>
+<tr>
+<td>归档待人工确认</td>
+<td>省厅人工判断</td>
+<td>主动选择成功/未通过、填写依据、二次确认</td>
+<td>成功done或未通过failed，均已归档；确认后结论只读</td>
 </tr>
 </tbody></table>
 <h3>4.3 年度、退回与不可变记录</h3>
@@ -467,7 +473,7 @@
 <h3>5.4 平均分与厅方决定</h3>
 <p>去最高与去最低分别可选，各删除一条已提交专家总分后求算术均分，不改原始分。相同最高/最低分也只删除一条；至少保留一条。保存reviewSnapshot作为审理时点快照。专家组全员提交才可复审；厅方可结合舆情、安全事件、部门意见和历史原因独立给出通过/不通过。</p>
 <h3>5.5 时间口径</h3>
-<p>统一使用中国标准时间（Asia/Shanghai）的业务日期。创建默认1年（12个自然月），支持延期；最早现场申请为创建开始+180自然日；方案期限为+60自然日。60天逾期提醒、允许补传，未上传不得申请现场评审；超创建期且无延期申请则判失败。公示按7工作日计算，当前只排周末，正式需接法定节假日与调休日；结束日期当天不归档，翌日且整批异议结清后自动归档。本地在打开、回到窗口、每30秒及保存异议时检查，关闭原型后不执行后台任务。</p>
+<p>统一使用中国标准时间（Asia/Shanghai）的业务日期。创建默认1年（12个自然月），支持延期；最早现场申请为创建开始+180自然日；方案期限为+60自然日。60天逾期提醒、允许补传，未上传不得申请现场评审；原有创建超期规则不变。公示按7工作日计算，当前只排周末，正式需接法定节假日与调休日；结束日期当天不归档，翌日统一归档，不检查异议是否结清。系统仅作期满流转，申创结论由省厅人工确认。本地在打开、回到窗口、每30秒检查，关闭原型后不执行后台任务。</p>
 <h3>5.6 专家指派与评分规则管理</h3>
 <p>专家一期仅要求姓名、电话、单位及唯一账号；保留旧扩展档案，不再要求职称、领域和有效期。指派阶段由项目当前环节自动确定，资料默认3人、会议和现场默认7人，现有组预填人数，现场默认沿用前阶段名单。配置范围1—10，勾选须一致；支持随机抽取、候选搜索、已选摘要及移除、弹窗添加专家。真实开户及通知不在本轮集成。</p>
 <p>管理员使用「题库与题表」，分为题库管理和题表配置：</p>
@@ -1254,23 +1260,23 @@
 <li>使用角色：受派评审专家。</li>
 <li>用户故事：作为受派评审专家，希望提交本人资料意见，以便在当前项目和权限范围内完成意见提交。</li>
 <li>触发入口：填写具体意见后提交。</li>
-<li>处理及校验：意见必填；关联材料版本；每位专家独立提交，之后只读。</li>
-<li>正常结果与返回：汇总给省厅并返回项目列表。</li>
+<li>处理及校验：本人意见提交后只读。最后一位受派专家提交后，项目进入独立的document-summary省厅资料审核意见汇总节点，系统仅汇齐意见，不替省厅判断。</li>
+<li>正常结果与返回：专家返回项目列表；省厅在汇总节点查看全部意见。</li>
 <li>异常/权限边界：其他专家未完成不代表全组通过。</li>
-<li>验收用例：给定具有对应权限且页面处于适用状态；当“填写具体意见后提交”；则“汇总给省厅并返回项目列表。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“填写具体意见后提交”；则“专家返回项目列表；省厅在汇总节点查看全部意见。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
 <li>页面定位：<code>[data-action=&quot;submit-document-expert&quot;]</code>。</li>
 </ul>
-<h4>D05 查阅各专家资料意见</h4>
+<h4>D05 省厅资料审核意见汇总</h4>
 <ul>
-<li>功能项 / 一级 / 二级：专家资料审核 / 厅方汇总 / 查阅各专家资料意见。</li>
+<li>功能项 / 一级 / 二级：专家资料审核 / 厅方汇总 / 省厅资料审核意见汇总。</li>
 <li>当前状态：已实现；正式开发优先级：P0。</li>
 <li>使用角色：省厅审核人员。</li>
-<li>用户故事：作为省厅审核人员，希望查阅各专家资料意见，以便在当前项目和权限范围内完成厅方汇总。</li>
+<li>用户故事：作为省厅审核人员，希望省厅资料审核意见汇总，以便在当前项目和权限范围内完成厅方汇总。</li>
 <li>触发入口：所有资料意见汇齐后办理。</li>
-<li>处理及校验：看到每位专家意见、内容、时间；可选择补证或进入下一环节。4A进入会议，其他开放类别进入创建。</li>
-<li>正常结果与返回：填写厅方办理意见和必要补正期限。</li>
+<li>处理及校验：专家全员提交后进入独立汇总节点；左侧只读申报材料，右侧查看逐人意见、选择补证或进入会议评审并填写汇总意见。</li>
+<li>正常结果与返回：推进进入meeting；补证由市州修改，补回仍由document-summary省厅办理，不回初审、不覆盖原专家意见。</li>
 <li>异常/权限边界：未全部提交时只能查看与改派，无办理决定表单。</li>
-<li>验收用例：给定具有对应权限且页面处于适用状态；当“所有资料意见汇齐后办理”；则“填写厅方办理意见和必要补正期限。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“所有资料意见汇齐后办理”；则“推进进入meeting；补证由市州修改，补回仍由document-summary省厅办理，不回初审、不覆盖原专家意见。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
 <li>页面定位：<code>#main [name=&quot;documentDecision&quot;]</code>。</li>
 </ul>
 <h4>D06 提交资料审核办理决定</h4>
@@ -1280,7 +1286,7 @@
 <li>使用角色：省厅审核人员。</li>
 <li>用户故事：作为省厅审核人员，希望提交资料审核办理决定，以便在当前项目和权限范围内完成厅方决定。</li>
 <li>触发入口：点击提交办理决定。</li>
-<li>处理及校验：意见必填；补证期限正整数；补证returnStage=document。4A沿用资料专家为会议专家。</li>
+<li>处理及校验：仅document-summary且没有待补正事项时省厅可提交；办理意见必填，补证期限正整数，returnStage=document-summary；推进时沿用资料审核专家为会议专家。</li>
 <li>正常结果与返回：返回列表；补证完成仍由厅方处理；通过按类别推进。</li>
 <li>异常/权限边界：不清除原专家资料意见和历史。</li>
 <li>验收用例：给定具有对应权限且页面处于适用状态；当“点击提交办理决定”；则“返回列表；补证完成仍由厅方处理；通过按类别推进。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
@@ -1845,37 +1851,50 @@
 <li>使用角色：省厅审核人员。</li>
 <li>用户故事：作为省厅审核人员，希望查看公示及异议，以便在当前项目和权限范围内完成异议。</li>
 <li>触发入口：点击查看公示/异议。</li>
-<li>处理及校验：展示期限、渠道；登记未处理实名异议数量和处理说明；不在此设置对外匿名留言。</li>
-<li>正常结果与返回：弹窗办理本项目异议。</li>
+<li>处理及校验：展示本批公示起止、渠道及各景区异议记录；登记时明确选择异议对应景区，不设置匿名留言或自动判定成立。</li>
+<li>正常结果与返回：弹窗登记具体景区异议，期满后从归档项目查看保留记录。</li>
 <li>异常/权限边界：指定渠道和实名真实性在生产服务核验。</li>
-<li>验收用例：给定具有对应权限且页面处于适用状态；当“点击查看公示/异议”；则“弹窗办理本项目异议。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“点击查看公示/异议”；则“弹窗登记具体景区异议，期满后从归档项目查看保留记录。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
 <li>页面定位：<code>[data-action=&quot;publicity-batch&quot;]</code>。</li>
 </ul>
-<h4>B07 保存异议处理</h4>
+<h4>B07 按景区登记公示异议</h4>
 <ul>
-<li>功能项 / 一级 / 二级：结果公示 / 异议 / 保存异议处理。</li>
+<li>功能项 / 一级 / 二级：结果公示 / 异议 / 按景区登记公示异议。</li>
 <li>当前状态：已实现；正式开发优先级：P0。</li>
 <li>使用角色：省厅审核人员。</li>
-<li>用户故事：作为省厅审核人员，希望保存异议处理，以便在当前项目和权限范围内完成异议。</li>
-<li>触发入口：输入数量、说明后保存。</li>
-<li>处理及校验：未处理数量须非负整数；更新后重新判断完成条件。</li>
-<li>正常结果与返回：保留记录并仍在公示办理弹窗。</li>
-<li>异常/权限边界：不得以未处理数负值绕过条件。</li>
-<li>验收用例：给定具有对应权限且页面处于适用状态；当“输入数量、说明后保存”；则“保留记录并仍在公示办理弹窗。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
-<li>页面定位：<code>[data-action=&quot;save-objection&quot;]</code>。</li>
+<li>用户故事：作为省厅审核人员，希望按景区登记公示异议，以便在当前项目和权限范围内完成异议。</li>
+<li>触发入口：选择景区、填写实名异议内容及依据后保存。</li>
+<li>处理及校验：公示期内选择同批具体景区，逐条填写指定渠道收到的实名异议内容及依据；永久关联projectId，不以通用数量替代明细。</li>
+<li>正常结果与返回：异议只写入所选景区，其他同批景区不受影响；不自动判定异议成立与否。</li>
+<li>异常/权限边界：期满停止登记并归档；异议不阻塞期满归档。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“选择景区、填写实名异议内容及依据后保存”；则“异议只写入所选景区，其他同批景区不受影响；不自动判定异议成立与否。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>页面定位：<code>[name=&quot;objectionProject&quot;],[name=&quot;objectionContent&quot;],[data-action=&quot;save-objection&quot;]</code>。</li>
 </ul>
-<h4>B08 公示到期自动归档</h4>
+<h4>B08 公示期满统一归档</h4>
 <ul>
-<li>功能项 / 一级 / 二级：结果公示 / 完成归档 / 公示到期自动归档。</li>
+<li>功能项 / 一级 / 二级：结果公示 / 完成归档 / 公示期满统一归档。</li>
 <li>当前状态：已实现；正式开发优先级：P0。</li>
-<li>使用角色：系统（本地前端检查）。</li>
-<li>用户故事：作为系统（本地前端检查），希望公示到期自动归档，以便在当前项目和权限范围内完成完成归档。</li>
-<li>触发入口：页面打开、回到窗口、每30秒检查或保存异议结清。</li>
-<li>处理及校验：当前日晚于结束日，整批每项目未处理实名异议为0，才自动完成；不再人工点击完成公示。</li>
-<li>正常结果与返回：整批自动转done并生成评定公告；项目进入归档。</li>
-<li>异常/权限边界：任一项目不满足则整批等待；原型关闭时不能后台执行，定时服务仍待集成。</li>
-<li>验收用例：给定具有对应权限且页面处于适用状态；当“页面打开、回到窗口、每30秒检查或保存异议结清”；则“整批自动转done并生成评定公告；项目进入归档。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
-<li>页面定位：<code>[data-action=&quot;save-objection&quot;],#main .publicity-actions</code>。</li>
+<li>使用角色：系统（本地日期检查）。</li>
+<li>用户故事：作为系统（本地日期检查），希望公示期满统一归档，以便在当前项目和权限范围内完成完成归档。</li>
+<li>触发入口：页面打开、回到窗口或每30秒检查。</li>
+<li>处理及校验：当前日晚于公示结束日，项目即归档；有无异议均归档，异议原文随项目保留。不计算申创是否通过。</li>
+<li>正常结果与返回：项目移入归档菜单，结论为待人工确认；不自动生成申创成功公告。</li>
+<li>异常/权限边界：公示未结束不归档；原型关闭时无后台执行能力，正式调度待集成。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“页面打开、回到窗口或每30秒检查”；则“项目移入归档菜单，结论为待人工确认；不自动生成申创成功公告。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>页面定位：<code>#main .publicity-actions,#main .records-card</code>。</li>
+</ul>
+<h4>B09 人工确认归档结论</h4>
+<ul>
+<li>功能项 / 一级 / 二级：结果公示 / 归档结论 / 人工确认归档结论。</li>
+<li>当前状态：已实现；正式开发优先级：P0。</li>
+<li>使用角色：省厅审核人员。</li>
+<li>用户故事：作为省厅审核人员，希望人工确认归档结论，以便在当前项目和权限范围内完成归档结论。</li>
+<li>触发入口：公示期满后在归档项目打开人工确认。</li>
+<li>处理及校验：查看项目异议记录，主动选择申创成功/未通过并填写判断依据，二次确认。无论结论如何均保持归档；系统不能依据分数或异议数量代判。</li>
+<li>正常结果与返回：成功归档或未通过归档；保留确认人、时间、依据及所有异议，提交后只读。</li>
+<li>异常/权限边界：未选择结论不能提交；非厅方不能操作；已确认不重复提交，不修改原分或重新开流程。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“公示期满后在归档项目打开人工确认”；则“成功归档或未通过归档；保留确认人、时间、依据及所有异议，提交后只读。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>页面定位：<code>[data-action=&quot;archive-conclusion&quot;],[name=&quot;archiveOutcome&quot;],[name=&quot;archiveReason&quot;],[data-action=&quot;save-archive-conclusion&quot;]</code>。</li>
 </ul>
 <h3>6.16 辅助能力</h3>
 <h4>R01 项目智能助手</h4>
@@ -2326,6 +2345,20 @@
 <li>验收用例：给定具有对应权限且页面处于适用状态；当“提交时出现字段、附件或需核验的问题”；则“保留已填意见、评分及草稿；补齐后再次校验下一项，全部通过才允许确认提交。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
 <li>页面定位：<code>.validation-message,.validation-target</code>。</li>
 </ul>
+<h3>6.23 资料审核</h3>
+<h4>D08 查看独立省厅汇总节点</h4>
+<ul>
+<li>功能项 / 一级 / 二级：资料审核 / 省厅汇总节点 / 查看独立省厅汇总节点。</li>
+<li>当前状态：已实现；正式开发优先级：P0。</li>
+<li>使用角色：省厅审核人员。</li>
+<li>用户故事：作为省厅审核人员，希望查看独立省厅汇总节点，以便在当前项目和权限范围内完成省厅汇总节点。</li>
+<li>触发入口：全部专家资料意见提交后打开项目。</li>
+<li>处理及校验：仅document-summary可提交省厅办理决定；专家和市州不能代办。补证期间省厅决定暂停，补回恢复本节点。</li>
+<li>正常结果与返回：形成汇总办理记录；决定补证或推进会议评审。</li>
+<li>异常/权限边界：改派保留原始意见，新受派者可查看材料和已发生过程。</li>
+<li>验收用例：给定具有对应权限且页面处于适用状态；当“全部专家资料意见提交后打开项目”；则“形成汇总办理记录；决定补证或推进会议评审。”，且满足上述校验；不满足时按异常边界阻止或提示，不越级、不改写历史。</li>
+<li>页面定位：<code>#main [name=&quot;documentDecision&quot;],#main [name=&quot;documentComment&quot;]</code>。</li>
+</ul>
 <h2 id="section-8">7. 数据结构与接口要求</h2>
 <h3>7.1 当前本地模型</h3>
 <table>
@@ -2364,7 +2397,7 @@
 <tr>
 <td>专家评分</td>
 <td>sheets[stage][expertId]</td>
-<td>answers、required、comment、uploads、total、result、signature、submitted、at、majorResults</td>
+<td>answers、required、comment、uploads、total、result、signature、submitted、at、majorResults；result仅为题表客观核验/分值对照记录，不是省厅审批结论，不驱动通过或拒绝</td>
 </tr>
 <tr>
 <td>分项答案</td>
@@ -2388,8 +2421,13 @@
 </tr>
 <tr>
 <td>公示</td>
-<td>publicity.start/end/channel/contact/batch/unresolved/objectionNote/completed</td>
-<td>以batch关联同批项目；目前配置复制在各项目</td>
+<td>publicity.start/end/channel/contact/batch/objections/completed/archivedAt</td>
+<td>批次配置复制到各项目；objections逐条保存id/projectId/content/at/actor，旧数量说明迁移留存</td>
+</tr>
+<tr>
+<td>归档结论</td>
+<td>archiveConclusion、archiveDecision.outcome/comment/actor/at</td>
+<td>pending待人工、success成功、failure未通过；已归档不重新开流程，确认后只读</td>
 </tr>
 <tr>
 <td>记录</td>
@@ -2631,7 +2669,7 @@
 <ul>
 <li>安全：身份认证、角色+地域+项目任务权限，所有文件下载/搜索/导出同权；内部备注后端字段级过滤；正式数据不可存为明文base64浏览器长期数据。</li>
 <li>审计：所有正式提交、改派、签字、延期、上会、公示和归档不可变记录；记录操作前后值和关联版本。敏感文件访问也留痕。</li>
-<li>一致性：提交幂等、防重复点击；多端修改提示版本冲突；全批公示完成用事务；不允许部分归档却显示整批成功。</li>
+<li>一致性：提交幂等、防重复点击；多端修改提示版本冲突；期满项目逐一幂等归档，异议数不阻塞同批或本项目归档；归档与人工申创结论分开记录，不允许把已归档显示为自动申创成功。</li>
 <li>性能建议：普通页面P95≤2秒；局部评分反馈≤300ms；大表分页/按大项加载，345题不必一次渲染全部；文本检索异步，超时可重试，不自动给分。</li>
 <li>可访问性：按钮有清晰名称；表单标签关联；错误指向具体项；焦点可见；不只靠颜色表达当前/已完成/未来；尊重减少动画设置。</li>
 <li>文件：生产端文件白名单、大小限制、恶意内容扫描、预览隔离、下载鉴权、到期链接；禁止执行附件脚本。</li>
@@ -2810,8 +2848,8 @@
 </tr>
 <tr>
 <td>资料补证</td>
-<td>厅方退回，市州补回</td>
-<td>仍document交厅方，原意见保留</td>
+<td>厅方汇总退回，市州补回</td>
+<td>仍document-summary交省厅，原意见保留</td>
 </tr>
 <tr>
 <td>回避</td>
@@ -2880,8 +2918,13 @@
 </tr>
 <tr>
 <td>公示完成</td>
-<td>结束前、存在异议及全部满足时触发检查</td>
-<td>前两种保持公示；全批期满且异议结清后系统本地自动归档并生成公告，无人工完成按钮</td>
+<td>结束前、有异议/无异议的期满项目触发检查</td>
+<td>未到期保持公示；到期均归档且结论待人工，不生成成功公告；异议关联景区完整保留</td>
+</tr>
+<tr>
+<td>归档人工结论</td>
+<td>厅方查看异议，选择成功/未通过并确认</td>
+<td>结论和依据写入审计记录；两种结果都留在归档，不回活动列表；专家原分不变</td>
 </tr>
 <tr>
 <td>历史</td>
@@ -2972,6 +3015,7 @@
 <h2 id="section-13">12. 版本维护与追溯</h2>
 <p>本次仅修改V2，旧版本及报告书字段原文不变。V2.4整合办理及流转记录，增加统计跳转、参与筛选、初审直接指派、简化专家资料与选人、规则版本管理、180天校验、手写签字前端演示、往次详情及整批自动归档。不重置已有项目、填写内容、专家原始分和剔分逻辑。业务扩展位于workflow-ui.js；交互主目录为interaction-spec.js，构建脚本生成PRD.md与PRD.html。后端接口待集成章节沿用，AI检索/智能助手本期禁用，OCR开放演示识别与人工核对回填。</p>
 <p>V2.9（2026年11月4日）将最新交互统一为题库→题表配置→流程节点绑定；补齐线上/线下、混合达标与分值、不计分、复制/停用/同步、配置总结、独立发布及历史冻结说明。PRD正文采用当前规则，旧版模块PRD另存并明确标为历史参考，不再并列作为现行开发要求。</p>
+<p>V2.10（2026年11月4日）新增独立省厅资料审核意见汇总节点，补证提交返回该省厅节点。公示仅登记期限及具体景区实名异议，期满全部归档，不因异议阻塞；归档结论待省厅人工确认，成功与未通过都保留归档。系统只客观展示评分和核验结果，不设系统分数审批节点。长图判断菱形无编号，编号仅属于执行流程节点。原型增补汇总待办及有异议期满归档的演示项目，不覆盖原有材料或分数。</p>
 <p>PRD正文将后续正式开发要求与原型限制分离；附录基于当前代码自动导出，不等同于对标准原文的法律适用性确认。</p>
 <h2 id="section-14">附录A. 本期景区申报报告书字段字典</h2>
 <h3>A.1 旅游景区质量等级申创</h3>
@@ -6439,7 +6483,7 @@
 <h2 id="section-17">附录D. 后续类别扩展说明</h2>
 <p>本期隐藏其他申创类别。模板和存量数据保留，不进入当前演示；后续按正式开发范围重新开放。</p>
 <h2 id="section-18">附录E. 文件与能力追溯</h2>
-<p>文档覆盖140个交互节点、41个报告书控件、41个附件目录、4A会议8因子与现场345项，以及避暑正式评价分组。</p>
+<p>文档覆盖142个交互节点、41个报告书控件、41个附件目录、4A会议8因子与现场345项，以及避暑正式评价分组。</p>
 <table>
 <thead>
 <tr>
@@ -6461,15 +6505,15 @@
 </tr>
 <tr>
 <td>app.js</td>
-<td>c3626ddd076d09159c77f5ba755e3d4dcb2722b6a41b74223dda4a14804438b3</td>
+<td>14e97ecce7d5fa6965fde67afe3d85150ac934793e572af9d1c5df0ec149f38f</td>
 </tr>
 <tr>
 <td>workflow-ui.js</td>
-<td>3743e2398f79b9876c6aae0a142766e10cfed53aa39702adcb17cccf99b03a8e</td>
+<td>27259643c9e85fef1678321971fb3137b0ba0e6970548d4e0a8d32af233770a3</td>
 </tr>
 <tr>
 <td>validation.js</td>
-<td>6152669eba98d7126cb9dd7d65f1bad2ab80ee2e861a8f9553a0280868ee1fd9</td>
+<td>4bbfa8610700c8152820d0121e1bc671ee797e43ba29cf71d60dc5ff92f51ad8</td>
 </tr>
 <tr>
 <td>validation.css</td>
@@ -6529,11 +6573,11 @@
 </tr>
 <tr>
 <td>interaction-spec.js</td>
-<td>e568d7f04b34c45be74876979686bf027a222335c83f06a147023319ccb7d617</td>
+<td>796c8628774f1fa258e365e39eec180ce67a5d44dab048e357cc16da2e7be676</td>
 </tr>
 <tr>
 <td>guide.js</td>
-<td>4a259fbd0983e8cf56a458fe794285e6480f63935571dc0141c9693945a23454</td>
+<td>f4e1a6c39406c8707f6a0c7398296c0fc2db1bbbabdabec542aec2102ffb1eaf</td>
 </tr>
 <tr>
 <td>guide.css</td>
@@ -9873,8 +9917,8 @@
 <p>配置模块快照：scoring-config.js · be732d698bd847297eb9867768380ddcc0b48c248ed6c5d9f286657658208220</p>
 <p>配置模块快照：scoring-config.css · f2888bbe28cd2b49f50251cc0def6b63255585298534f26b1d84cc69719888ad</p>
 <p>配置模块快照：scoring-catalog.js · 33ec74cf891866b18cdb5519a9c6297555b12cc60fec740bfefb90ea7e0a6981</p>
-<p>配置模块快照：score-mounts.js · c8e812d57f168f2ed5b17c53d9baa97772cd1af26cee46869b1d1fb5f4810d64</p>
+<p>配置模块快照：score-mounts.js · 8c73bd7b80568110f8190a8fe8407a218220ce8cb0c13077be706e8825cc3964</p>
 <p>配置模块快照：score-mounts.css · f7ef1b8002233bfe80ec5e362e2984c8e56e965f3c17904a8785012cd350b9aa</p>
-<p>配置模块快照：question-tables.js · 887ab4c8cf4f92210d8f05d9c6852cdb3b34975a12c759a8d7e069818faf2af4</p>
+<p>配置模块快照：question-tables.js · a2c3623386ec0349c5d91aaf542d5bf7aaa150dba1e5774c5d6d4504eaeebc32</p>
 <p>配置模块快照：question-tables.css · 56ad07182c59188f89841cfc0364f681731ba209e47184a1431083030ce7fc12</p>
 </main></body></html>

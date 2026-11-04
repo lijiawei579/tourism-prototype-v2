@@ -1,5 +1,5 @@
 {
-  "version": "V2.9",
+  "version": "V2.10",
   "published": "2026-11-04",
   "files": [
     {
@@ -14,8 +14,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 1529,
-      "sha256": "8f5d2c6db0ecf049c9526289d9f326a280999a163a0176f28bfb56fbc3145362"
+      "bytes": 1998,
+      "sha256": "853453d0dd82bd3d594c9eb02bd0e787582ed866bec390cd14edcefb11c258be"
     },
     {
       "file": "admin-theme.css",
@@ -24,8 +24,8 @@
     },
     {
       "file": "app.js",
-      "bytes": 147465,
-      "sha256": "c3626ddd076d09159c77f5ba755e3d4dcb2722b6a41b74223dda4a14804438b3"
+      "bytes": 151027,
+      "sha256": "14e97ecce7d5fa6965fde67afe3d85150ac934793e572af9d1c5df0ec149f38f"
     },
     {
       "file": "data.js",
@@ -41,6 +41,16 @@
       "file": "demo.js",
       "bytes": 18849,
       "sha256": "3c3cb4cd99e56225ee280930f4d6d2d58e0e45dce808fb98e0d6385392dc7d2d"
+    },
+    {
+      "file": "docs/4a-workflow.png",
+      "bytes": 1473506,
+      "sha256": "44df31f690f95deccd68be25240664ee60a83c9e0e5dddb132659d9f36a1ffd3"
+    },
+    {
+      "file": "docs/4a-workflow.svg",
+      "bytes": 46435,
+      "sha256": "d0f9383cc1034d655f64cf16f6608ddfffdacc51a5e43c45ca91f822a40b1653"
     },
     {
       "file": "docs/PRD-景区边界与资源清单.md",
@@ -64,13 +74,13 @@
     },
     {
       "file": "docs/PRD.html",
-      "bytes": 488896,
-      "sha256": "2f5ba745fb22c7fae46e0a7d8a5d90dde8208f6b32982ce4b936757db8f9c6ec"
+      "bytes": 494781,
+      "sha256": "905d0e7426a6283baf1e53e4146bd21c2016f368739b804b46e214aa695229d7"
     },
     {
       "file": "docs/PRD.md",
-      "bytes": 418436,
-      "sha256": "a11879a7df2150fc3b72f601c40ce8ef17cfe01d65095724ddaf301218da5dde"
+      "bytes": 423956,
+      "sha256": "6f2d66ad12b9eaffddf043e5cbfd1bf3915348e2910320ad329c6a17875fa7db"
     },
     {
       "file": "docs/field-dictionary.json",
@@ -94,8 +104,8 @@
     },
     {
       "file": "guide.js",
-      "bytes": 12300,
-      "sha256": "4a259fbd0983e8cf56a458fe794285e6480f63935571dc0141c9693945a23454"
+      "bytes": 12343,
+      "sha256": "f4e1a6c39406c8707f6a0c7398296c0fc2db1bbbabdabec542aec2102ffb1eaf"
     },
     {
       "file": "index.html",
@@ -104,8 +114,8 @@
     },
     {
       "file": "interaction-spec.js",
-      "bytes": 88267,
-      "sha256": "e568d7f04b34c45be74876979686bf027a222335c83f06a147023319ccb7d617"
+      "bytes": 91699,
+      "sha256": "796c8628774f1fa258e365e39eec180ce67a5d44dab048e357cc16da2e7be676"
     },
     {
       "file": "question-tables.css",
@@ -114,8 +124,8 @@
     },
     {
       "file": "question-tables.js",
-      "bytes": 37404,
-      "sha256": "887ab4c8cf4f92210d8f05d9c6852cdb3b34975a12c759a8d7e069818faf2af4"
+      "bytes": 37651,
+      "sha256": "a2c3623386ec0349c5d91aaf542d5bf7aaa150dba1e5774c5d6d4504eaeebc32"
     },
     {
       "file": "registration.css",
@@ -154,8 +164,8 @@
     },
     {
       "file": "score-mounts.js",
-      "bytes": 50766,
-      "sha256": "c8e812d57f168f2ed5b17c53d9baa97772cd1af26cee46869b1d1fb5f4810d64"
+      "bytes": 50851,
+      "sha256": "8c73bd7b80568110f8190a8fe8407a218220ce8cb0c13077be706e8825cc3964"
     },
     {
       "file": "scoring-catalog.js",
@@ -204,8 +214,8 @@
     },
     {
       "file": "validation.js",
-      "bytes": 12116,
-      "sha256": "6152669eba98d7126cb9dd7d65f1bad2ab80ee2e861a8f9553a0280868ee1fd9"
+      "bytes": 11956,
+      "sha256": "4bbfa8610700c8152820d0121e1bc671ee797e43ba29cf71d60dc5ff92f51ad8"
     },
     {
       "file": "vendor/lucide.min.js",
@@ -224,8 +234,8 @@
     },
     {
       "file": "workflow-ui.js",
-      "bytes": 31799,
-      "sha256": "3743e2398f79b9876c6aae0a142766e10cfed53aa39702adcb17cccf99b03a8e"
+      "bytes": 35775,
+      "sha256": "27259643c9e85fef1678321971fb3137b0ba0e6970548d4e0a8d32af233770a3"
     }
   ]
 }

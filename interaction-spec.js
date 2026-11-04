@@ -241,5 +241,13 @@
   update('Q09',{selector:'[data-action="qb-pick"],[data-action="qb-pick-save"],[data-action="qb-sync"],[data-action="qb-remove-item"],[data-action="qb-pick-page-all"],[data-action="qb-pick-search"],[data-qb-pick],#qbPickSource,#qbPickQuery'});
   add('Q11','题库与题表','列表分页','浏览题库、选题及题表分页','[data-action="qb-bank-prev"],[data-action="qb-bank-next"],[data-action="qb-pick-prev"],[data-action="qb-pick-next"],[data-action="sc-prev"],[data-action="sc-next"]','系统管理员','点击上一页或下一页','题库和选题按20题分页；切换来源/关键词后回第一页，跨页选题保留勾选。首尾页对应翻页按钮禁用。','只切换当前列表，不改题目、计分或发布状态。','选题取消不选入；表内已引用的题不能再次勾选。');
   add('Q12','题库与题表','题目规则编辑','配置题型、选项和题分','[name="scTitle"],[name="scMode"],[name="qbQuestionSource"],#scModeFields,[name="scNote"],[name="scItemZero"],[name="scItemExempt"]','系统管理员','在题目编辑弹窗修改题干、来源分类、题型或规则','单选按档，多选累计封顶；区间、数量加扣分、人工、达标和完整性分别配置。完整性空间分与实体选项分须匹配本题满分，允许空间分为0。原文仅对照，数值非法不能保存。','点击保存产生题库新修订；当前题表内编辑仅同步该表草稿，取消不改题目。','此处不配置整表总分、门槛或节点；选项顺序和分值调整不改变历史绑定版本。');
+  update('D04',{rule:'本人意见提交后只读。最后一位受派专家提交后，项目进入独立的document-summary省厅资料审核意见汇总节点，系统仅汇齐意见，不替省厅判断。',result:'专家返回项目列表；省厅在汇总节点查看全部意见。'});
+  update('D05',{title:'省厅资料审核意见汇总',rule:'专家全员提交后进入独立汇总节点；左侧只读申报材料，右侧查看逐人意见、选择补证或进入会议评审并填写汇总意见。',result:'推进进入meeting；补证由市州修改，补回仍由document-summary省厅办理，不回初审、不覆盖原专家意见。'});
+  update('D06',{rule:'仅document-summary且没有待补正事项时省厅可提交；办理意见必填，补证期限正整数，returnStage=document-summary；推进时沿用资料审核专家为会议专家。'});
+  update('B06',{rule:'展示本批公示起止、渠道及各景区异议记录；登记时明确选择异议对应景区，不设置匿名留言或自动判定成立。',result:'弹窗登记具体景区异议，期满后从归档项目查看保留记录。'});
+  update('B07',{title:'按景区登记公示异议',selector:'[name="objectionProject"],[name="objectionContent"],[data-action="save-objection"]',trigger:'选择景区、填写实名异议内容及依据后保存',rule:'公示期内选择同批具体景区，逐条填写指定渠道收到的实名异议内容及依据；永久关联projectId，不以通用数量替代明细。',result:'异议只写入所选景区，其他同批景区不受影响；不自动判定异议成立与否。',exception:'期满停止登记并归档；异议不阻塞期满归档。'});
+  update('B08',{title:'公示期满统一归档',selector:'#main .publicity-actions,#main .records-card',roles:'系统（本地日期检查）',trigger:'页面打开、回到窗口或每30秒检查',rule:'当前日晚于公示结束日，项目即归档；有无异议均归档，异议原文随项目保留。不计算申创是否通过。',result:'项目移入归档菜单，结论为待人工确认；不自动生成申创成功公告。',exception:'公示未结束不归档；原型关闭时无后台执行能力，正式调度待集成。'});
+  add('D08','资料审核','省厅汇总节点','查看独立省厅汇总节点','#main [name="documentDecision"],#main [name="documentComment"]','省厅审核人员','全部专家资料意见提交后打开项目','仅document-summary可提交省厅办理决定；专家和市州不能代办。补证期间省厅决定暂停，补回恢复本节点。','形成汇总办理记录；决定补证或推进会议评审。','改派保留原始意见，新受派者可查看材料和已发生过程。');
+  add('B09','结果公示','归档结论','人工确认归档结论','[data-action="archive-conclusion"],[name="archiveOutcome"],[name="archiveReason"],[data-action="save-archive-conclusion"]','省厅审核人员','公示期满后在归档项目打开人工确认','查看项目异议记录，主动选择申创成功/未通过并填写判断依据，二次确认。无论结论如何均保持归档；系统不能依据分数或异议数量代判。','成功归档或未通过归档；保留确认人、时间、依据及所有异议，提交后只读。','未选择结论不能提交；非厅方不能操作；已确认不重复提交，不修改原分或重新开流程。');
   window.V2_INTERACTIONS = nodes;
 })();

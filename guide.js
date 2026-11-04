@@ -17,7 +17,7 @@
     if(modal) entries=entries.filter(e=>e.targets.some(el=>modalRoot().contains(el)));
     else entries=entries.filter(e=>e.targets.some(el=>!el.closest('#overlay,#resourceOverlay')));
     // 当前办理优先，其次页面导航，共用身份/帮助放最后。
-    const stagePrefix={initial:'I',document:'D',meeting:'S',hall:'H',creation:'C',field:state.role==='expert'?'S':'V',committee:'M',publicity:'B'};
+    const stagePrefix={initial:'I',document:'D','document-summary':'D',meeting:'S',hall:'H',creation:'C',field:state.role==='expert'?'S':'V',committee:'M',publicity:'B',done:'B',failed:'B'};
     const primary=ctx.view==='project'&&ctx.tab==='task'?stagePrefix[ctx.stage]:ctx.view==='home'?'W':ctx.view==='publicity'?'B':ctx.view==='apply'||ctx.view==='new'?'A':ctx.view==='experts'?'E':ctx.view==='settings'?'T':ctx.view==='rules'?'Q':ctx.view==='project'?'P':'L';
     const rank=n=>n.id.startsWith(primary)?0:n.id.startsWith('G')?2:1;
     entries.sort((a,b)=>rank(a.n)-rank(b.n));
