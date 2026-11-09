@@ -27,30 +27,20 @@
 <polygon points="1400,3405.0 1392.211633153827,3386.578780119942 1407.788366846173,3386.578780119942" fill="#5a7894"/>
 <polyline points="1400,3635.0 1400,3825.0" fill="none" stroke="#5a7894" stroke-width="4"/>
 <polygon points="1400,3825.0 1392.211633153827,3806.578780119942 1407.788366846173,3806.578780119942" fill="#5a7894"/>
-<polyline points="1400,4075.0 1400,4295.0" fill="none" stroke="#31816a" stroke-width="4"/>
-<polygon points="1400,4295.0 1392.211633153827,4276.578780119942 1407.788366846173,4276.578780119942" fill="#31816a"/>
+<polyline points="1400,4075.0 1400,4285.0" fill="none" stroke="#31816a" stroke-width="4"/>
+<polygon points="1400,4285.0 1392.211633153827,4266.578780119942 1407.788366846173,4266.578780119942" fill="#31816a"/>
 <polyline points="860.0,3950 70,3950 70,10420 875.0,10420" fill="none" stroke="#b85c43" stroke-width="4"/>
 <polygon points="875.0,10420 856.5787801199423,10427.788366846173 856.5787801199423,10412.211633153827" fill="#b85c43"/>
-<polyline points="1875.0,4400 2330,4400 2330,4630.0" fill="none" stroke="#b08536" stroke-width="4"/>
-<polygon points="2330,4630.0 2322.211633153827,4611.578780119942 2337.788366846173,4611.578780119942" fill="#b08536"/>
-<polyline points="2005.0,4710 1940,4710 1940,4490 1875,4490 1875,4400 1875.0,4400" fill="none" stroke="#b08536" stroke-width="4"/>
-<polygon points="1875.0,4400 1856.5787801199424,4407.788366846173 1856.5787801199424,4392.211633153827" fill="#b08536"/>
-<polyline points="1400,4505.0 1400,4845.0" fill="none" stroke="#5a7894" stroke-width="4"/>
-<polygon points="1400,4845.0 1392.211633153827,4826.578780119942 1407.788366846173,4826.578780119942" fill="#5a7894"/>
-<polyline points="1400,5135.0 1400,5435.0" fill="none" stroke="#31816a" stroke-width="4"/>
-<polygon points="1400,5435.0 1392.211633153827,5416.578780119942 1407.788366846173,5416.578780119942" fill="#31816a"/>
-<polyline points="810.0,4990 450,4990 450,4400 925.0,4400" fill="none" stroke="#b08536" stroke-width="4"/>
+<polyline points="1400,4515.0 1400,4715.0" fill="none" stroke="#5a7894" stroke-width="4"/>
+<polygon points="1400,4715.0 1392.211633153827,4696.578780119942 1407.788366846173,4696.578780119942" fill="#5a7894"/>
+<polyline points="1400,4945.0 1400,5225.0" fill="none" stroke="#5a7894" stroke-width="4"/>
+<polygon points="1400,5225.0 1392.211633153827,5206.578780119942 1407.788366846173,5206.578780119942" fill="#5a7894"/>
+<polyline points="1400,5495.0 1400,5795.0" fill="none" stroke="#31816a" stroke-width="4"/>
+<polygon points="1400,5795.0 1392.211633153827,5776.578780119942 1407.788366846173,5776.578780119942" fill="#31816a"/>
+<polyline points="810.0,5360 450,5360 450,4400 925.0,4400" fill="none" stroke="#b08536" stroke-width="4"/>
 <polygon points="925.0,4400 906.5787801199423,4407.788366846173 906.5787801199423,4392.211633153827" fill="#b08536"/>
-<polyline points="1990.0,4990 2720,4990 2720,4330 1875,4330 1875,4400 1875.0,4400" fill="none" stroke="#b08536" stroke-width="4"/>
-<polygon points="1875.0,4400 1856.5787801199424,4407.788366846173 1856.5787801199424,4392.211633153827" fill="#b08536"/>
-<polyline points="810.0,4990 320,4990 320,4270 925,4270 925,4400 925.0,4400" fill="none" stroke="#b08536" stroke-width="4"/>
-<polygon points="925.0,4400 906.5787801199423,4407.788366846173 906.5787801199423,4392.211633153827" fill="#b08536"/>
-<polyline points="925.0,4400 160,4400 160,10300 875,10300 875,10420 875.0,10420" fill="none" stroke="#b85c43" stroke-width="4"/>
-<polygon points="875.0,10420 856.5787801199423,10427.788366846173 856.5787801199423,10412.211633153827" fill="#b85c43"/>
-<polyline points="1400,5625.0 1400,5795.0" fill="none" stroke="#5a7894" stroke-width="4"/>
-<polygon points="1400,5795.0 1392.211633153827,5776.578780119942 1407.788366846173,5776.578780119942" fill="#5a7894"/>
-<polyline points="1875.0,5910 2600,5910 2600,5530 1875.0,5530" fill="none" stroke="#b08536" stroke-width="4"/>
-<polygon points="1875.0,5530 1893.4212198800576,5522.211633153827 1893.4212198800576,5537.788366846173" fill="#b08536"/>
+<polyline points="1875.0,5910 2710,5910 2710,4830 1875.0,4830" fill="none" stroke="#b08536" stroke-width="4"/>
+<polygon points="1875.0,4830 1893.4212198800576,4822.211633153827 1893.4212198800576,4837.788366846173" fill="#b08536"/>
 <polyline points="1400,6025.0 1400,6235.0" fill="none" stroke="#5a7894" stroke-width="4"/>
 <polygon points="1400,6235.0 1392.211633153827,6216.578780119942 1407.788366846173,6216.578780119942" fill="#5a7894"/>
 <polyline points="1400,6425.0 1400,6595.0" fill="none" stroke="#5a7894" stroke-width="4"/>
@@ -131,25 +121,22 @@
 <text x="1331.0" y="3894.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#516c96">省厅审核人员</text>
 <text x="1235.0" y="3932.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="30" font-weight="700" fill="#233d58">省厅综合意见是否通过？</text>
 <text x="1193.0" y="3973.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#61778e">以人工提交结论为准，不按分数自动推进</text>
-<rect x="925.0" y="4295.0" width="950" height="210" rx="16" fill="#eff6ff" stroke="#2474bd" stroke-width="3"/>
-<text x="1331.0" y="4322.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#2474bd">市州申创人员</text>
-<text x="1149.0" y="4356.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">8. 现场创建期：上传方案、开展创建</text>
-<text x="1170.0" y="4409.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">本阶段不公示；60天内上传创建方案并提醒</text>
-<text x="1132.0" y="4443.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">默认1年，前180天不能申请现场评审；可申请延期</text>
-<rect x="2005.0" y="4630.0" width="650" height="160" rx="16" fill="#f0f4fa" stroke="#516c96" stroke-width="3"/>
-<text x="2261.0" y="4649.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#516c96">省厅审核人员</text>
-<text x="2237.0" y="4683.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">延期申请审批</text>
-<text x="2150.0" y="4736.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">同意更新期限；不同意原期限不变</text>
-<polygon points="1400,4845.0 1990.0,4990 1400,5135.0 810.0,4990" fill="#eff6ff" stroke="#2474bd" stroke-width="3"/>
-<text x="1249.5" y="4918.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#2474bd">市州申创人员 / 省厅审核人员</text>
-<text x="1168.0" y="4956.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="30" font-weight="700" fill="#233d58">A方案已上传？B处于可申请时间？</text>
-<text x="1273.5" y="4997.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#61778e">市州申请或省厅主动推进</text>
-<text x="1208.0" y="5029.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#61778e">创建满180天至截止日（含批准延期）</text>
-<rect x="925.0" y="5435.0" width="950" height="190" rx="16" fill="#f0f4fa" stroke="#516c96" stroke-width="3"/>
-<text x="1331.0" y="5452.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#516c96">省厅审核人员</text>
-<text x="1257.5" y="5486.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">9. 指派现场评审专家</text>
-<text x="1196.0" y="5539.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">默认沿用首次专家，可改选或随机抽取</text>
-<text x="1172.0" y="5573.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">新受派专家确认回避；已确认者不重复确认</text>
+<rect x="925.0" y="4285.0" width="950" height="230" rx="16" fill="#eff6ff" stroke="#2474bd" stroke-width="3"/>
+<text x="1331.0" y="4305.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#2474bd">市州申创人员</text>
+<text x="1149.0" y="4339.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">8. 现场创建期：上传方案、开展创建</text>
+<text x="1112.0" y="4392.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">未申请现场评审 / 已申请现场评审 / 申请延期为状态值</text>
+<text x="1175.0" y="4426.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">默认1年、方案60天上传提醒均不拦截流转</text>
+<text x="1208.0" y="4460.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">申请现场评审或延期后仍停留本节点</text>
+<rect x="925.0" y="4715.0" width="950" height="230" rx="16" fill="#f0f4fa" stroke="#516c96" stroke-width="3"/>
+<text x="1331.0" y="4735.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#516c96">省厅审核人员</text>
+<text x="1257.5" y="4769.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">9. 指派现场评审专家</text>
+<text x="1184.0" y="4822.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">不限申请状态、方案是否上传或参考日期</text>
+<text x="1196.0" y="4856.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">默认沿用首次专家，可改选或随机抽取</text>
+<text x="1172.0" y="4890.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">新受派专家确认回避；已确认者不重复确认</text>
+<polygon points="1400,5225.0 1990.0,5360 1400,5495.0 810.0,5360" fill="#f0f4fa" stroke="#516c96" stroke-width="3"/>
+<text x="1331.0" y="5304.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#516c96">省厅审核人员</text>
+<text x="1220.0" y="5342.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="30" font-weight="700" fill="#233d58">是否已确认指派现场专家？</text>
+<text x="1227.5" y="5383.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#61778e">确认有效专家名单才进入现场评审</text>
 <rect x="925.0" y="5795.0" width="950" height="230" rx="16" fill="#fff7e7" stroke="#b27b27" stroke-width="3"/>
 <text x="1354.0" y="5815.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="700" fill="#b27b27">评审专家</text>
 <text x="1155.0" y="5849.5" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="31" font-weight="700" fill="#233d58">10. 现场评审：设施与服务质量评分</text>
@@ -224,24 +211,14 @@
 <text x="1420" y="4160" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#31816a">是：进入现场创建期（不公示）</text>
 <rect x="94" y="4137" width="334.0" height="33" fill="white"/>
 <text x="100" y="4140" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b85c43">否：结束本年度申报，直接归档</text>
-<rect x="2034" y="4477" width="104.0" height="33" fill="white"/>
-<text x="2040" y="4480" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">申请延期</text>
-<rect x="1984" y="4797" width="301.0" height="33" fill="white"/>
-<text x="1990" y="4800" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">审批后交节点8市州继续创建</text>
-<rect x="1414" y="4697" width="266.0" height="33" fill="white"/>
-<text x="1420" y="4700" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#5a7894">市州申请 / 省厅主动推进</text>
-<rect x="1414" y="5227" width="273.0" height="33" fill="white"/>
-<text x="1420" y="5230" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#31816a">A是 / B是：进入现场评审</text>
-<rect x="74" y="4547" width="355.0" height="33" fill="white"/>
-<text x="80" y="4550" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">A否 / B是：回节点8市州上传方案</text>
-<rect x="2014" y="5187" width="355.0" height="33" fill="white"/>
-<text x="2020" y="5190" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">A是 / B否：回节点8市州等待窗口</text>
-<rect x="74" y="4827" width="401.0" height="33" fill="white"/>
-<text x="80" y="4830" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">A否 / B否：回节点8补方案并继续创建</text>
-<rect x="184" y="5797" width="634.0" height="33" fill="white"/>
-<text x="190" y="5800" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b85c43">保留既有规则：创建超期且未申请延期 / 现场评审，终止归档</text>
-<rect x="1994" y="5677" width="278.0" height="33" fill="white"/>
-<text x="2000" y="5680" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">需回避：交节点9省厅改派</text>
+<rect x="1414" y="4607" width="196.0" height="33" fill="white"/>
+<text x="1420" y="4610" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#5a7894">省厅组织现场评审</text>
+<rect x="1414" y="5607" width="242.0" height="33" fill="white"/>
+<text x="1420" y="5610" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#31816a">是：激活现场专家任务</text>
+<rect x="84" y="5117" width="417.0" height="33" fill="white"/>
+<text x="90" y="5120" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">否：取消 / 未指派，回节点8保持创建期</text>
+<rect x="2004" y="5647" width="278.0" height="33" fill="white"/>
+<text x="2010" y="5650" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#b08536">需回避：交节点9省厅改派</text>
 <rect x="1414" y="6107" width="242.0" height="33" fill="white"/>
 <text x="1420" y="6110" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="23" font-weight="400" fill="#5a7894">全员提交后由省厅汇总</text>
 <rect x="1414" y="6937" width="196.0" height="33" fill="white"/>
@@ -292,6 +269,11 @@
 <text x="2041" y="3675" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">节点7省厅复审与节点11现场汇总，均由省厅主动选择结</text>
 <text x="2041" y="3712" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">论并填写意见。系统不依据分数、达标数量或异议数替代</text>
 <text x="2041" y="3749" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">审批。</text>
+<rect x="2010" y="4390" width="650" height="181" rx="10" fill="#f7f9fc" stroke="#e0e7ef" stroke-width="3"/>
+<text x="2031" y="4409" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="27" font-weight="700" fill="#233d58">申请状态不是流程节点</text>
+<text x="2031" y="4455" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">未申请现场评审、已申请现场评审、申请延期只记录创建</text>
+<text x="2031" y="4492" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">期状态。无独立延期审批；方案和参考日期不决定流转。</text>
+<text x="2031" y="4529" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">省厅确认现场专家名单后才进入节点10。</text>
 <rect x="2010" y="6370" width="670" height="144" rx="10" fill="#f7f9fc" stroke="#e0e7ef" stroke-width="3"/>
 <text x="2031" y="6389" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="27" font-weight="700" fill="#233d58">现场不通过直接归档</text>
 <text x="2031" y="6435" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">节点11省厅选择未通过并确认，直接结束本年度申报、归档</text>
@@ -306,7 +288,7 @@
 <text x="2031" y="8845" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">节点15已将项目归档，结论暂为待人工确认。节点16只是</text>
 <text x="2031" y="8882" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">补充人工结论，不重新打开业务流程；成功与未通过都保持</text>
 <text x="2031" y="8919" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">归档，材料和异议均保留。</text>
-<text x="90" y="10700" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="25" font-weight="400" fill="#61778e">V2.10 · 判断菱形均无编号，属于其前一业务节点的过程判断；编号仅用于定位具体执行节点。</text>
+<text x="90" y="10700" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="25" font-weight="400" fill="#61778e">V2.11 · 判断菱形均无编号，属于其前一业务节点的过程判断；编号仅用于定位具体执行节点。</text>
 <text x="90" y="10755" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">依据：V2 app.js、workflow-ui.js、score-mounts.js、question-tables.js。系统期满归档为前端演示检查，后端调度待集成。</text>
-<text x="90" y="10810" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">保留既有创建时限规则；本次不调整创建期超期处理。审批及最终申创结论均由省厅人工提交，不设系统分数审批节点。</text>
+<text x="90" y="10810" dominant-baseline="text-before-edge" font-family="Microsoft YaHei" font-size="24" font-weight="400" fill="#61778e">创建期方案与日期仅提醒，不自动失败或归档；厅方确认指派现场专家为进入现场评审的唯一业务触发。</text>
 </svg>

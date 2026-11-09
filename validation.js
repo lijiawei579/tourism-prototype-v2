@@ -95,7 +95,6 @@ function validateAction(action){
   }
   if(action==='submit-score'&&!sheetFor(project,project.stage).signature?.data)return fail('请上传本人签字图片或扫码手写签字','#signatureFile');
   if(action==='submit-committee'&&!project.committeeFiles?.length)return fail('请上传上会材料','[data-upload="committeeFiles"]');
-  if(action==='request-field'&&!project.creationPlan?.length&&state.role==='city')return fail('请先上传创建方案','[data-upload="creationPlan"]');
   if(action==='submit-extension'&&read('extensionDate')<=project.creationEnd)return fail('延期日期须晚于创建期结束日期',fieldSelector('extensionDate'));
   if(action==='submit-publicity'&&read('publicityEnd')<workingEnd(read('publicityStart')))return fail('公示期不能少于7个工作日',fieldSelector('publicityEnd'));
   if(action==='save-settings'){

@@ -1,6 +1,6 @@
 {
-  "version": "V2.10",
-  "published": "2026-11-04",
+  "version": "V2.13",
+  "published": "2026-11-09",
   "files": [
     {
       "file": ".gitignore",
@@ -14,8 +14,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 1998,
-      "sha256": "853453d0dd82bd3d594c9eb02bd0e787582ed866bec390cd14edcefb11c258be"
+      "bytes": 2372,
+      "sha256": "19f7e2389347f0f2decc4a15c0eb8a7a931af18cba42917a6ed5a3ab8718aeab"
     },
     {
       "file": "admin-theme.css",
@@ -24,8 +24,8 @@
     },
     {
       "file": "app.js",
-      "bytes": 151027,
-      "sha256": "14e97ecce7d5fa6965fde67afe3d85150ac934793e572af9d1c5df0ec149f38f"
+      "bytes": 152018,
+      "sha256": "7ecb08789088dd33a65a3c2981037bde98c7141d54d2ffcde947afc02978d13e"
     },
     {
       "file": "data.js",
@@ -44,13 +44,18 @@
     },
     {
       "file": "docs/4a-workflow.png",
-      "bytes": 1473506,
-      "sha256": "44df31f690f95deccd68be25240664ee60a83c9e0e5dddb132659d9f36a1ffd3"
+      "bytes": 1468524,
+      "sha256": "b4ec08bae17258a793f8a7a144060dd141db622f91daee2fe0b6c5fd6f20f8dd"
     },
     {
       "file": "docs/4a-workflow.svg",
-      "bytes": 46435,
-      "sha256": "d0f9383cc1034d655f64cf16f6608ddfffdacc51a5e43c45ca91f822a40b1653"
+      "bytes": 44399,
+      "sha256": "73c05b81966ba00583394dab179a9e259a21433e705345d1dcc85633255c29ea"
+    },
+    {
+      "file": "docs/PRD-数字评分与题型精简.md",
+      "bytes": 5498,
+      "sha256": "37aaec9777ac8f52afb558cac4e50a156849d3eeddcaf12b89189686a7512c93"
     },
     {
       "file": "docs/PRD-景区边界与资源清单.md",
@@ -69,18 +74,18 @@
     },
     {
       "file": "docs/PRD-题库与题表配置.md",
-      "bytes": 5549,
-      "sha256": "d2b1f7125559b8f3e8209b64827ae2971b9734b6d6c5c6e6491bec8ac72ecb15"
+      "bytes": 5216,
+      "sha256": "47f37d59cf41f2b29cfd5d278c8b7f5c5ff058c9409b0aba1fcd54179842a7bb"
     },
     {
       "file": "docs/PRD.html",
-      "bytes": 494781,
-      "sha256": "905d0e7426a6283baf1e53e4146bd21c2016f368739b804b46e214aa695229d7"
+      "bytes": 546475,
+      "sha256": "61ae2af80bfad4bcc42ba8dfa4d26f01f872cfc33ecfcb51f6c69b338bb16502"
     },
     {
       "file": "docs/PRD.md",
-      "bytes": 423956,
-      "sha256": "6f2d66ad12b9eaffddf043e5cbfd1bf3915348e2910320ad329c6a17875fa7db"
+      "bytes": 472713,
+      "sha256": "136fe51284bd504544488606d3eedd2643761977cc1fddcfcf958be2b4db9542"
     },
     {
       "file": "docs/field-dictionary.json",
@@ -104,28 +109,38 @@
     },
     {
       "file": "guide.js",
-      "bytes": 12343,
-      "sha256": "f4e1a6c39406c8707f6a0c7398296c0fc2db1bbbabdabec542aec2102ffb1eaf"
+      "bytes": 12403,
+      "sha256": "22d66ae2f12999c86f94f1eb2ed05477fdbcd5c734fdaf0ad97ec187f001cc4f"
     },
     {
       "file": "index.html",
-      "bytes": 4615,
-      "sha256": "bf181db47b6e64f58cbaab1030fd464034db6d0eb8f4340d22102dc4b326ab1f"
+      "bytes": 4713,
+      "sha256": "f1c886e8483482fd68959b6549f4397c41885165dce0bec3189b10a54f4de829"
     },
     {
       "file": "interaction-spec.js",
-      "bytes": 91699,
-      "sha256": "796c8628774f1fa258e365e39eec180ce67a5d44dab048e357cc16da2e7be676"
+      "bytes": 97949,
+      "sha256": "98e66825029b5c76176f2358aec938967a49b66810397563f60efc2177cb1675"
+    },
+    {
+      "file": "numeric-scoring.css",
+      "bytes": 1632,
+      "sha256": "6cacaff1ce88f711201bd986d9e36bd5c680ae51af5bd7285aa15cca03d626bf"
+    },
+    {
+      "file": "numeric-scoring.js",
+      "bytes": 16640,
+      "sha256": "a4d90d8225103f741ba4e4c1fbacba178028a521777f27eb17c151fd06d94da8"
     },
     {
       "file": "question-tables.css",
-      "bytes": 3169,
-      "sha256": "56ad07182c59188f89841cfc0364f681731ba209e47184a1431083030ce7fc12"
+      "bytes": 4280,
+      "sha256": "57fabc6fb90326c2d5715667a24123b16d2c71dfb1445281a7973aff819efa67"
     },
     {
       "file": "question-tables.js",
-      "bytes": 37651,
-      "sha256": "a2c3623386ec0349c5d91aaf542d5bf7aaa150dba1e5774c5d6d4504eaeebc32"
+      "bytes": 37816,
+      "sha256": "fb0dec76b12d2e7063a993dc1156fe93e28e77cb17e6d11cc3da33d41817340b"
     },
     {
       "file": "registration.css",
@@ -164,8 +179,8 @@
     },
     {
       "file": "score-mounts.js",
-      "bytes": 50851,
-      "sha256": "8c73bd7b80568110f8190a8fe8407a218220ce8cb0c13077be706e8825cc3964"
+      "bytes": 50858,
+      "sha256": "14a4e7df735e89fdc8635e4a480edfa9dce0fa04f595369b0a5b5d7d7393a4b6"
     },
     {
       "file": "scoring-catalog.js",
@@ -214,8 +229,8 @@
     },
     {
       "file": "validation.js",
-      "bytes": 11956,
-      "sha256": "4bbfa8610700c8152820d0121e1bc671ee797e43ba29cf71d60dc5ff92f51ad8"
+      "bytes": 11802,
+      "sha256": "d47fa4fc794dc38980282a822a9b06c202b703cc5474ccb599979e752a66afee"
     },
     {
       "file": "vendor/lucide.min.js",
@@ -234,8 +249,8 @@
     },
     {
       "file": "workflow-ui.js",
-      "bytes": 35775,
-      "sha256": "27259643c9e85fef1678321971fb3137b0ba0e6970548d4e0a8d32af233770a3"
+      "bytes": 35793,
+      "sha256": "6299e30cfa66420af9d3385c86256a2dafb9a2eb4ca9aa4107ac1648794e0f57"
     }
   ]
 }

@@ -35,7 +35,7 @@ function updateAssignmentSelection(){
   const out=document.getElementById('selectedExperts');if(out)out.innerHTML=selectedExpertsHTML();
 }
 function assignmentDialog(){
-  const p=getProject();if(state.role!=='hall'||['draft','done','failed','initial'].includes(p.stage))return toast('当前环节不能指派专家。');
+  const p=getProject();if(state.role!=='hall'||!p||p.correction||['draft','done','failed','initial'].includes(p.stage))return toast('当前环节不能指派专家。');
   const stage=state.assignment?.stage||(['document','meeting','field'].includes(p.stage)?p.stage:p.stage==='document-summary'?'document':p.stage==='hall'?'meeting':'field');
   const selected=state.assignment?.selected||new Set(p.assigned[stage]?.length?p.assigned[stage]:stage==='field'?p.assigned.meeting||p.assigned.document||[]:[]);
   state.assignment={stage,selected,count:state.assignment?.count||selected.size||(stage==='document'?3:7)};
