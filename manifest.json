@@ -1,6 +1,6 @@
 {
-  "version": "V2.13",
-  "published": "2026-11-09",
+  "version": "V2.16",
+  "published": "2026-11-10",
   "files": [
     {
       "file": ".gitignore",
@@ -14,8 +14,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 2372,
-      "sha256": "19f7e2389347f0f2decc4a15c0eb8a7a931af18cba42917a6ed5a3ab8718aeab"
+      "bytes": 2917,
+      "sha256": "7dce629b717bb7776dc1dd108fa113d8d421b0a04f0bcdb5df12dde42246d6d0"
     },
     {
       "file": "admin-theme.css",
@@ -24,8 +24,13 @@
     },
     {
       "file": "app.js",
-      "bytes": 152018,
-      "sha256": "7ecb08789088dd33a65a3c2981037bde98c7141d54d2ffcde947afc02978d13e"
+      "bytes": 152172,
+      "sha256": "447e760c8cded31fdc6b4d0320454abde08ce077a193805d319faecd5ee22dcf"
+    },
+    {
+      "file": "coordinates.js",
+      "bytes": 14065,
+      "sha256": "b652ceb5b47332169683232474eab31dee5cdcc639467f0cee93f1f29f9e364b"
     },
     {
       "file": "data.js",
@@ -39,8 +44,8 @@
     },
     {
       "file": "demo.js",
-      "bytes": 18849,
-      "sha256": "3c3cb4cd99e56225ee280930f4d6d2d58e0e45dce808fb98e0d6385392dc7d2d"
+      "bytes": 18943,
+      "sha256": "39917022d3ca2eac24a812f9f6d17f80dabef24f56f2838ba817644d0400df6c"
     },
     {
       "file": "docs/4a-workflow.png",
@@ -53,14 +58,19 @@
       "sha256": "73c05b81966ba00583394dab179a9e259a21433e705345d1dcc85633255c29ea"
     },
     {
+      "file": "docs/PRD-坐标标准与自动转换.md",
+      "bytes": 6450,
+      "sha256": "34111485c57f55109dbefac8061d1cc9c4b42df4169e023c4c3a664246c89b96"
+    },
+    {
       "file": "docs/PRD-数字评分与题型精简.md",
-      "bytes": 5498,
-      "sha256": "37aaec9777ac8f52afb558cac4e50a156849d3eeddcaf12b89189686a7512c93"
+      "bytes": 2444,
+      "sha256": "49a933dfed8df7a0b73ba93c7548449b9012b6eb8b314a28b0eaa29e8f7c74f9"
     },
     {
       "file": "docs/PRD-景区边界与资源清单.md",
-      "bytes": 22570,
-      "sha256": "e005b82698e178c34a41ff7eb20bc82c3749fc75320b513a642210029ee224de"
+      "bytes": 22908,
+      "sha256": "6b98d6905b5c6f949f3ea5b753ba3d7a24feae6e1414fb6786927d0dfd7c1ae6"
     },
     {
       "file": "docs/PRD-自定义评分表与节点挂载.md",
@@ -74,18 +84,18 @@
     },
     {
       "file": "docs/PRD-题库与题表配置.md",
-      "bytes": 5216,
-      "sha256": "47f37d59cf41f2b29cfd5d278c8b7f5c5ff058c9409b0aba1fcd54179842a7bb"
+      "bytes": 4706,
+      "sha256": "3847812109beab57c2406c27860658b64a6316ceb1499f6ced205b345a42bf3d"
     },
     {
       "file": "docs/PRD.html",
-      "bytes": 546475,
-      "sha256": "61ae2af80bfad4bcc42ba8dfa4d26f01f872cfc33ecfcb51f6c69b338bb16502"
+      "bytes": 549194,
+      "sha256": "cd91dbaeaf159e4e3f6897144a5c8419e8e9248db789d3742c23ba493c93e45a"
     },
     {
       "file": "docs/PRD.md",
-      "bytes": 472713,
-      "sha256": "136fe51284bd504544488606d3eedd2643761977cc1fddcfcf958be2b4db9542"
+      "bytes": 477067,
+      "sha256": "7f1c86c104aadcf68cb199feb50467db07cf4255af763bbbf73760bf36093c78"
     },
     {
       "file": "docs/field-dictionary.json",
@@ -109,28 +119,28 @@
     },
     {
       "file": "guide.js",
-      "bytes": 12403,
-      "sha256": "22d66ae2f12999c86f94f1eb2ed05477fdbcd5c734fdaf0ad97ec187f001cc4f"
+      "bytes": 12421,
+      "sha256": "e6dde205f295a6024d8bdbb19b5a1479644d5afddb5249a3d5977259a6e49f68"
     },
     {
       "file": "index.html",
-      "bytes": 4713,
-      "sha256": "f1c886e8483482fd68959b6549f4397c41885165dce0bec3189b10a54f4de829"
+      "bytes": 4751,
+      "sha256": "fc601c65b335fbb72291eec9a67e04f6d39b199b3089f4c7b273297ca12140b3"
     },
     {
       "file": "interaction-spec.js",
-      "bytes": 97949,
-      "sha256": "98e66825029b5c76176f2358aec938967a49b66810397563f60efc2177cb1675"
+      "bytes": 105808,
+      "sha256": "5c61f26a5b7f48e6d78dac90e557a363d4afc6f6211f088204926a99a7873fb9"
     },
     {
       "file": "numeric-scoring.css",
-      "bytes": 1632,
-      "sha256": "6cacaff1ce88f711201bd986d9e36bd5c680ae51af5bd7285aa15cca03d626bf"
+      "bytes": 1943,
+      "sha256": "e3ee187e40f680790ed909b0242979a2d075ef5d6405c358e8b475b0a3a9c9d9"
     },
     {
       "file": "numeric-scoring.js",
-      "bytes": 16640,
-      "sha256": "a4d90d8225103f741ba4e4c1fbacba178028a521777f27eb17c151fd06d94da8"
+      "bytes": 14777,
+      "sha256": "8b9089ccee29fcbea73117e103784ce2dd9afe060ccf0531fac58d2ec1aead53"
     },
     {
       "file": "question-tables.css",
@@ -139,8 +149,8 @@
     },
     {
       "file": "question-tables.js",
-      "bytes": 37816,
-      "sha256": "fb0dec76b12d2e7063a993dc1156fe93e28e77cb17e6d11cc3da33d41817340b"
+      "bytes": 35378,
+      "sha256": "7c52c23e915c96cf839f6b5f3af2906c5dabc9eb1ba570ddbaa45eed8d006703"
     },
     {
       "file": "registration.css",
@@ -154,13 +164,13 @@
     },
     {
       "file": "resources.css",
-      "bytes": 5944,
-      "sha256": "40e270b3c64bf6a96b714cdf20839da56fcb305f0153b42f88db95629bc15529"
+      "bytes": 8012,
+      "sha256": "81cf4e034de2a59eeaa43cb9a3a41de039d70ee6c6374430768e352a717a67a5"
     },
     {
       "file": "resources.js",
-      "bytes": 44663,
-      "sha256": "1e63b72166948ff54ab2198ebec49d70d4d2156958db4093fa03c946bea5dfe5"
+      "bytes": 52955,
+      "sha256": "a8be12cba1c042207855682643fa796cf180f9922217b3a19b6a6055d16b19e0"
     },
     {
       "file": "review-layout.css",
@@ -179,8 +189,8 @@
     },
     {
       "file": "score-mounts.js",
-      "bytes": 50858,
-      "sha256": "14a4e7df735e89fdc8635e4a480edfa9dce0fa04f595369b0a5b5d7d7393a4b6"
+      "bytes": 50573,
+      "sha256": "8e2d24ecad268c73124163721b309adef6ff9118f4ec74cc783d7fc6e2aaa3d0"
     },
     {
       "file": "scoring-catalog.js",
@@ -229,8 +239,8 @@
     },
     {
       "file": "validation.js",
-      "bytes": 11802,
-      "sha256": "d47fa4fc794dc38980282a822a9b06c202b703cc5474ccb599979e752a66afee"
+      "bytes": 12081,
+      "sha256": "def29ea7aee89c62001091bd3d8faa0ca9b0ec70390c221274fb53a4f1565383"
     },
     {
       "file": "vendor/lucide.min.js",

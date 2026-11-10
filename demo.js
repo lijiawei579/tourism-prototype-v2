@@ -20,6 +20,8 @@
     return [...host.querySelectorAll('[data-field]')].map(el=>({el,key:el.dataset.field,label:(el.id?host.querySelector(`label[for="${el.id}"]`):null)?.textContent||el.closest('.field')?.querySelector('label')?.textContent||el.closest('label')?.textContent||'填报内容'}));
   }
   function sampleValue(p,key,label,el){
+    if(key==='longitude')return '106.21000000';
+    if(key==='latitude')return '27.49000000';
     if(/^(scenicName|scenicBriefName|resortApplyName|resortName|summerName)$/.test(key))return p.name;
     if(/Applicant|RecommendUnit|applicantUnit|ManagementOrg|Authority/i.test(key))return p.unit;
     if(/postcode/i.test(key))return '550000';

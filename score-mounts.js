@@ -106,7 +106,6 @@ function smQuestion(project,table,item,answer){return `<article class="question"
 function smValidate(project,holder){
   const tables=smBind(project),qualificationFailed=tables.filter(table=>!table.statisticsOnly&&table.requireAllQualified!==false).some(table=>table.items.filter(item=>item.mode==='qualification').some(item=>smData(holder,table).answers[item.id]?.result==='fail'));
   for(const table of tables){const data=smData(holder,table);
-    for(const group of table.groups){if(table.scoreEnabled===false)continue;const check=data.checks[group.id];if(group.zeroRule&&check?.zero===undefined||check?.exempt&&!check.reason?.trim())return smShowIssue(project,table,group.id,null,'请完成组级条件核验：'+group.name);}
     for(const item of table.items){if(qualificationFailed&&item.mode!=='qualification')continue;const answer=data.answers[item.id]||{},issue=scAnswerIssue(item,answer),deduction=table.kind==='numeric'&&item.mode!=='qualification'&&scAnswerScore(item,answer)<item.max||answer.result==='fail';if(issue||deduction&&!answer.note?.trim())return smShowIssue(project,table,item.groupId,item.id,issue||'请填写扣分或不达标依据：'+item.title);}
   }return true;
 }

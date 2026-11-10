@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const catalog = window.V2_RESOURCE_CATALOG;
+  const coords = window.V2_COORDINATES;
   const copy = value => JSON.parse(JSON.stringify(value));
   const html = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
   const epsilon = 1e-10;
@@ -11,7 +12,7 @@
   const button = (label, action, primary = false, attributes = '') => `<button type="button" class="btn ${primary ? 'primary' : ''}" data-rx="${action}" ${attributes}>${label}</button>`;
   const stamp = () => new Date().toISOString();
   const readable = value => value ? new Date(value).toLocaleString('zh-CN', {hour12:false}) : '未生成';
-  const newData = () => ({revision:0,started:false,draftRows:copy(catalog.defaults),confirmed:null,items:[],audit:[],snapshots:[]});
+  const newData = () => ({revision:0,started:false,draftRows:copy(catalog.defaults),draftCrs:'CGCS2000',confirmed:null,items:[],audit:[],snapshots:[]});
   const data = project => project.resourceData || newData();
   const editable = project => state.role === 'city' && project.id === getProject()?.id && project.region === '黔东南州' && (project.stage === 'draft' || !!project.correction);
   const authorized = project => project.type === 'scenic' && visibleProjects().some(row => row.id === project.id) && !(project.stage === 'draft' && !['city','hall'].includes(state.role));
@@ -31,8 +32,15 @@
     }
     return inside;
   }
-  function validate(rows) {
+  function validate(rows,sourceCrs='CGCS2000',dmsRows,format='decimal') {
     const errors = [], vertices = [], sourceRows = [];
+    if(format==='dms'&&dmsRows){
+      rows=rows.map((row,index)=>{
+        if(!dmsRows[index]||coords.dmsEmpty(dmsRows[index])&&index>=3)return row;
+        return dmsRows[index].map((value,axis)=>{const result=coords.fromDms(value,axis);if(result.error)errors.push({row:index,axis,part:result.part,message:`第${index+1}点${result.error}`});return result.error?'':String(result.value);});
+      });
+      if(errors.length)return {errors};
+    }
     let last = rows.length-1;
     while (last>=3 && rows[last].every(value=>!String(value).trim())) last--;
     rows.slice(0,last+1).forEach((row,index) => {
@@ -43,7 +51,11 @@
           errors.push({row:index,axis,message:`第${index+1}点${axis===0?'经度':'纬度'}须为${-limit}至${limit}的十进制度，最多8位小数。`});valid=false;
         }
       });
-      if (valid) {vertices.push(row.map(Number));sourceRows.push(index);}
+      if (valid) {
+        const result=coords.parse(row,sourceCrs);
+        if(result.error)errors.push({row:index,axis:result.axis,message:`第${index+1}点：${result.error}`});
+        else {vertices.push(result.coordinates);sourceRows.push(index);}
+      }
     });
     if (errors.length) return {errors};
     if (vertices.length>3 && equal(vertices[0],vertices.at(-1))) {vertices.pop();sourceRows.pop();}
@@ -68,7 +80,7 @@
   }
   function dirty(resourceData) {
     if (!resourceData.started) return false;
-    const result=validate(resourceData.draftRows);
+    const result=validate(resourceData.draftRows,resourceData.draftCrs||'CGCS2000',resourceData.draftDmsRows,resourceData.draftFormat||'dms');
     return !!result.errors.length || !resourceData.confirmed || result.hash!==resourceData.confirmed.boundaryHash;
   }
   function geometryMatch(geometry, polygon) {
@@ -136,7 +148,7 @@
     if (!items.length) return '<div class="rx-empty">本次申报资源清单为空，可修改边界重新查询，或补录申报资源。</div>';
     return `<div class="rx-table-scroll"><table class="rx-table"><thead><tr>${['主类','亚类','基本类','资源名称','备注'].map(label=>`<th scope="col">${label}</th>`).join('')}</tr></thead><tbody>${items.map(item=>{
       const labels=typeLabel(item);
-      return `<tr ${interactive?`tabindex="0" data-rx-row="${html(item.id)}" aria-selected="${selected===item.id}"`:''}><td>${html(item.mainClassCode)} ${html(labels[0])}</td><td>${html(labels[1])}</td><td>${html(labels[2])}</td><td>${html(item.resourceName)}${item.sourceType?`<small>${html(item.sourceType)}${item.editedFields?.length?' · 已修改申报副本':''}</small>`:''}</td><td>${html(item.remark)}${(item.systemWarnings||[]).map(note=>`<small class="rx-system-note">${html(note)}</small>`).join('')}</td></tr>`;
+      return `<tr ${interactive?`tabindex="0" data-rx-row="${html(item.id)}" aria-selected="${selected===item.id}"`:''}><td>${html(item.mainClassCode)} ${html(labels[0])}</td><td>${html(labels[1])}</td><td>${html(labels[2])}</td><td>${html(item.resourceName)}${item.geometry?.type==='Point'?`<small>CGCS2000 · ${item.geometry.coordinates.map(v=>Number(v).toFixed(8)).join(', ')}</small>`:''}${item.sourceType?`<small>${html(item.sourceType)}${item.editedFields?.length?' · 已修改申报副本':''}</small>`:''}</td><td>${html(item.remark)}${(item.systemWarnings||[]).map(note=>`<small class="rx-system-note">${html(note)}</small>`).join('')}</td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
   function status(resourceData, readonly, draft=false) {
@@ -144,12 +156,12 @@
   }
   function coordinateMarkup(resourceData, readonly) {
     const rows=readonly?(resourceData.confirmed?.vertices||[]).map(point=>point.map(String)):resourceData.draftRows;
-    return `<div class="rx-coordinates">${rows.map((row,index)=>`<div class="rx-coordinate" data-rx-coordinate="${index}"><strong>点 ${index+1}</strong><label>经度<input inputmode="decimal" data-rx-axis="0" aria-label="边界点${index+1}经度" value="${html(row[0])}" ${readonly?'readonly':''}></label><label>纬度<input inputmode="decimal" data-rx-axis="1" aria-label="边界点${index+1}纬度" value="${html(row[1])}" ${readonly?'readonly':''}></label>${!readonly?button('删除','delete-point',false,`data-index="${index}" ${rows.length<=3?'disabled':''}`):'<span></span>'}<div class="rx-error" aria-live="polite"></div></div>`).join('')||'<p class="rx-empty">此材料版本未录入边界坐标。</p>'}</div>`;
+    return `${readonly?'<p class="rx-note">展示标准：CGCS2000（EPSG:4490）</p>':`<label class="cx-system">填报坐标标准 *<select data-rx-crs>${coords.options(resourceData.draftCrs||'CGCS2000')}</select></label><p class="rx-note">切换标准不改变已输入的数值，请按坐标来源选择。生成边界时统一转换为CGCS2000后预览与查询；其他标准为演示近似转换。</p>`}${readonly?'':`<label class="cx-system">经纬度录入方式<select data-rx-format><option value="dms" ${(resourceData.draftFormat||'dms')==='dms'?'selected':''}>度分秒（° ′ ″）</option><option value="decimal" ${resourceData.draftFormat==='decimal'?'selected':''}>十进制度（°）</option></select><small class="rx-note">度、分为整数，秒最多6位小数；分、秒均须小于60。</small></label>`}<div class="rx-coordinates">${rows.map((row,index)=>`<div class="rx-coordinate" data-rx-coordinate="${index}"><strong>点 ${index+1}</strong><label>经度<input inputmode="decimal" data-rx-axis="0" aria-label="边界点${index+1}经度" value="${html(row[0])}" ${readonly?'readonly':''}></label><label>纬度<input inputmode="decimal" data-rx-axis="1" aria-label="边界点${index+1}纬度" value="${html(row[1])}" ${readonly?'readonly':''}></label>${!readonly?button('删除','delete-point',false,`data-index="${index}" ${rows.length<=3?'disabled':''}`):'<span></span>'}<div class="rx-error" aria-live="polite"></div></div>`).join('')||'<p class="rx-empty">此材料版本未录入边界坐标。</p>'}</div>`;
   }
   function sectionMarkup(zone) {
     const project=zone._rxProject,readonly=zone.dataset.rxReadonly==='true',resourceData=zone._rxSnapshot||data(project);
     const versions=readonly&&(project.resourceData?.snapshots?.length||0)>1?`<label class="rx-list-intro">材料版本 <select class="rx-version-select" data-rx-version>${project.resourceData.snapshots.map(snapshot=>`<option value="${snapshot.materialVersion}" ${zone._rxSnapshot?.materialVersion===snapshot.materialVersion?'selected':''}>正式 V${snapshot.materialVersion} · ${html(readable(snapshot.at))}</option>`).join('')}</select></label>`:'';
-    if (zone.dataset.rxZone==='boundary') return `<div class="rx-heading"><div><h3>景区旅游资源概述 · 景区边界</h3><p class="rx-note">按顺序填写经度、纬度，末点自动与首点闭合。坐标系：${crs}。</p></div><span class="rx-pill">01 边界 → 02 主类筛选 → 03 资源清单</span></div><div class="rx-banner rx-warning">${readonly?project.stage==='draft'?'本项目尚未正式提交，当前暂存的边界及资源仅供只读查看。':'本版本边界及资源为申报方提交的冻结副本，仅供核验。':'默认三点为演示边界，可直接生成；不代表当前项目实测范围。'}空间查询使用本地演示库，不调用AI、不自动计分。</div>${coordinateMarkup(resourceData,readonly)}<div class="rx-actions">${readonly?(resourceData.confirmed?button('查看边界地图','view-map'):''):button('添加边界点','add-point')+button('生成边界','generate',true)+(resourceData.confirmed?button('查看已确认边界','view-map')+button('放弃本次边界修改','restore-boundary',false,dirty(resourceData)?'':'disabled'):'')}</div><p class="rx-status" aria-live="polite">${html(status(resourceData,readonly,project.stage==='draft'))}</p><p class="rx-note">生成的资源清单展示在本Tab下方，与景区旅游资源概述、边界填写同页；原申报范围附件仍保留在第二个Tab。</p>`;
+    if (zone.dataset.rxZone==='boundary') return `<div class="rx-heading"><div><h3>景区旅游资源概述 · 景区边界</h3><p class="rx-note">按顺序填写经度、纬度，末点自动与首点闭合。存储标准：${crs}；支持度分秒或十进制度录入。</p></div><span class="rx-pill">01 边界 → 02 主类筛选 → 03 资源清单</span></div><div class="rx-banner rx-warning">${readonly?project.stage==='draft'?'本项目尚未正式提交，当前暂存的边界及资源仅供只读查看。':'本版本边界及资源为申报方提交的冻结副本，仅供核验。':'默认三点为演示边界，可直接生成；不代表当前项目实测范围。'}空间查询使用本地演示库，不调用AI、不自动计分。</div>${coordinateMarkup(resourceData,readonly)}<div class="rx-actions">${readonly?(resourceData.confirmed?button('查看边界地图','view-map'):''):button('添加边界点','add-point')+button('生成边界','generate',true)+(resourceData.confirmed?button('查看已确认边界','view-map')+button('放弃本次边界修改','restore-boundary',false,dirty(resourceData)?'':'disabled'):'')}</div><p class="rx-status" aria-live="polite">${html(status(resourceData,readonly,project.stage==='draft'))}</p><p class="rx-note">生成的资源清单展示在本Tab下方，与景区旅游资源概述、边界填写同页；原申报范围附件仍保留在第二个Tab。</p>`;
     const selected=selectedRows.get(project.id)||'';
     const chosen=resourceData.items.some(item=>item.id===selected);
     return `<div class="rx-heading"><div><h3>景区资源清单 <span class="rx-pill">${resourceData.items.length}项</span></h3><p class="rx-note">五列清单仅维护申报副本，不改写资源主库。</p></div>${!readonly?button('修改边界','go-boundary'):''}</div>${versions}<p class="rx-status">${html(status(resourceData,readonly,project.stage==='draft'))}</p>${dirty(resourceData)?'<div class="rx-banner rx-warning">边界有未确认修改，以下仍为上次已确认清单。请重新生成或放弃修改后提交。</div>':''}${!readonly?`<div class="rx-actions">${button('新增资源','add-resource',true)}${button('编辑所选','edit-resource',false,chosen?'':'disabled')}${button('删除所选','delete-resource',false,chosen?'':'disabled')}</div>`:''}${table(resourceData.items,!readonly,selected)}<p class="rx-note">${html(resourceData.confirmed?.classificationVersion||catalog.classificationVersion)}<br>${html(catalog.notice)}</p>${resourceData.confirmed?`<details><summary>查看查询来源及清单变更记录</summary><p class="rx-note">${html(resourceData.confirmed.sourceRevision)}<br>边界版本：${html(resourceData.confirmed.boundaryHash)} · 查询编号：${html(resourceData.confirmed.queryId)} · 清单修订：${resourceData.revision}</p>${(resourceData.confirmed.warnings||[]).map(warning=>`<p class="rx-note">${html(warning)}</p>`).join('')}${resourceData.audit.map(entry=>`<p class="rx-note">${html(readable(entry.at))} · ${html(entry.actor)} · ${html(entry.action)}</p>`).join('')}</details>`:''}`;
@@ -157,6 +169,17 @@
   function redraw(zone) {
     if(!zone?.isConnected)return;
     zone.innerHTML=sectionMarkup(zone);
+    if(zone.dataset.rxZone==='boundary'){
+      const project=zone._rxProject,readonly=zone.dataset.rxReadonly==='true',current=zone._rxSnapshot||data(project);
+      zone.querySelectorAll('[data-rx-coordinate]').forEach(row=>{
+        const index=Number(row.dataset.rxCoordinate);
+        coords.enhancePair(row,{inputs:[...row.querySelectorAll('[data-rx-axis]')],format:readonly?'dms':current.draftFormat||'dms',dmsValues:readonly?undefined:current.draftDmsRows?.[index],formatControl:false,readonly,onChange:meta=>{
+          if(!commit(project,next=>{next.started=true;next.draftFormat=meta.format;next.draftDmsRows??=next.draftRows.map(point=>point.map(coords.toDms));next.draftDmsRows[index]=meta.dmsValues;next.draftRows[index]=meta.sourceValues;})){redraw(zone);return;}
+          row.querySelector('.rx-error').textContent='';
+          zone.querySelector('.rx-status').textContent=status(data(project),false);zone.querySelector('[data-rx="restore-boundary"]')?.removeAttribute('disabled');
+        }});
+      });
+    }
     if(zone.dataset.rxReadonly!=='true')return;
     const project=zone._rxProject,snapshot=zone._rxSnapshot;
     if(zone.dataset.rxZone==='list'&&(snapshot||data(project)).confirmed)zone.querySelector('.rx-heading').insertAdjacentHTML('beforeend',button('查看本版本边界','view-map'));
@@ -202,7 +225,7 @@
     session={project,role:state.role,revision:data(project).revision,readonly,focus:document.activeElement,step:'map',zoom:1,offset:[0,0]};
   }
   function mapBody() {
-    return `<div class="rx-map-frame"><svg class="rx-map" role="img" aria-label="景区边界坐标地图，可缩放和平移" viewBox="0 0 900 360"></svg><div class="rx-map-tools">${button('＋','zoom-in',false,'aria-label="放大地图"')}${button('－','zoom-out',false,'aria-label="缩小地图"')}${button('复位','reset-map')}</div><div class="rx-map-legend">蓝线：输入边界 · 圆点：顶点 · 灰线：经纬网 · 拖动平移 / 滚轮缩放</div></div><p class="rx-note">离线经纬度坐标底图，图形由当前坐标实际计算。无道路/影像底图；不混用GCJ-02坐标。演示库位置非实测。</p>`;
+    return `<div class="rx-map-frame"><svg class="rx-map" role="img" aria-label="景区边界坐标地图，可缩放和平移" viewBox="0 0 900 360"></svg><div class="rx-map-tools">${button('＋','zoom-in',false,'aria-label="放大地图"')}${button('－','zoom-out',false,'aria-label="缩小地图"')}${button('复位','reset-map')}</div><div class="rx-map-legend">蓝线：输入边界 · 圆点：顶点 · 灰线：经纬网 · 拖动平移 / 滚轮缩放</div></div><p class="rx-note">离线经纬度坐标底图，图形由当前坐标实际计算。统一展示CGCS2000坐标，无道路/影像底图。${session.coordinateInput?.sourceCrs&&session.coordinateInput.sourceCrs!=='CGCS2000'?'已按所选来源进行近似转换；精确成果需测绘转换参数。':''}演示库位置非实测。</p>`;
   }
   function showMap() {
     session.step='map';
@@ -269,7 +292,7 @@
     if(focused)document.querySelector(`[data-rx-class="${focused}"]`)?.focus();
   }
   function asItem(record) {
-    return {...copy(record),id:'RI-'+record.resourceId,sourceType:'在库匹配',sourceSnapshot:copy(record),editedFields:[]};
+    return {...copy(record),id:'RI-'+record.resourceId,sourceType:'在库匹配',sourceSnapshot:copy(record),editedFields:[],coordinateInput:record.geometry?.type==='Point'?{sourceCrs:'CGCS2000',sourceValues:record.geometry.coordinates.map(value=>Number(value).toFixed(8))}:undefined};
   }
   function makeList() {
     if(!validSession())return;
@@ -290,7 +313,11 @@
     const success=commit(project,nextData=>{
       nextData.started=true;
       nextData.confirmed={vertices:copy(current.vertices),geometry:{type:'Polygon',coordinates:[[...copy(current.vertices),copy(current.vertices[0])]]},crs,boundaryHash:hash(current.vertices),confirmedAt:stamp(),confirmedBy:person(),queriedAt:current.queriedAt,queryId:current.queryId,classificationVersion:catalog.classificationVersion,sourceRevision:catalog.sourceRevision,matchedIds:current.result.matched.map(item=>item.resourceId),selectedMainClassCodes:[...current.selected],warnings:copy(current.result.warnings),emptyAcknowledged:!current.result.matched.length};
-      nextData.draftRows=copy(current.vertices).map(point=>point.map(String));
+      nextData.confirmed.coordinateInput=copy(current.coordinateInput);
+      nextData.confirmed.coordinateConversion={targetCrs:'EPSG:4490',approximate:current.coordinateInput.sourceCrs!=='CGCS2000',algorithmVersion:1};
+      nextData.draftRows=copy(current.coordinateInput.sourceRows);
+      nextData.draftCrs=current.coordinateInput.sourceCrs;
+      nextData.draftFormat=current.coordinateInput.format||'dms';nextData.draftDmsRows=copy(current.coordinateInput.dmsRows||current.coordinateInput.sourceRows.map(point=>point.map(coords.toDms)));
       nextData.items=next;
       audit(nextData,'确认边界并生成资源清单',{boundaryHash:previous.confirmed?.boundaryHash,items:previous.items},{boundaryHash:hash(current.vertices),items:next});
     },current.revision);
@@ -307,13 +334,30 @@
     session.editor=item?copy(item):{mainClassCode:'A',subClassCode:'AA',basicTypeCode:'AAA',resourceName:'新增旅游资源',remark:'',sourceType:'申报补录',systemWarnings:[]};
     showEditor();
   }
+  function ensureCoordinateInput(value) {
+    if(!value.coordinateInput){const point=value.geometry?.type==='Point'?value.geometry.coordinates:catalog.defaults[0];value.coordinateInput={sourceCrs:'CGCS2000',sourceValues:point.map(value=>Number(value).toFixed(8))};}
+    value.coordinateInput.format??='dms';value.coordinateInput.dmsValues??=value.coordinateInput.sourceValues.map(coords.toDms);
+  }
+  function captureCoordinate(input) {
+    if(!session?.editor||!input.dataset.rxEdit.startsWith('coordinate'))return false;
+    ensureCoordinateInput(session.editor);
+    const value=session.editor.coordinateInput,key=input.dataset.rxEdit;
+    if(key==='coordinateCrs')value.sourceCrs=input.value;
+    else value.sourceValues[key==='coordinateLng'?0:1]=input.value;
+    const preview=document.querySelector('#resourceOverlay [data-coordinate-result]');
+    if(preview)preview.textContent=coords.hint(coords.parseInput(value));
+    return true;
+  }
   function showEditor() {
     const value=session.editor;
+    ensureCoordinateInput(value);
     const subclasses=[...new Map(catalog.types.filter(row=>row[0]===value.mainClassCode).map(row=>[row[1],row[2]])).entries()];
     const basic=catalog.types.filter(row=>row[0]===value.mainClassCode&&row[1]===value.subClassCode&&!row[3].includes('UNVERIFIED'));
     const old=data(session.project),included=new Set(old.items.map(item=>item.resourceId));
     const candidates=old.confirmed?query(old.confirmed.vertices).matched.filter(item=>!included.has(item.resourceId)&&!item.basicTypeCode.includes('UNVERIFIED')):[];
-    show(session.itemId?'编辑资源申报副本':'新增申报资源',`<p class="rx-note">只修改本次申报；不写入资源主库。下级分类来自所附样表，不将未提供的字典伪装成完整标准。</p>${!session.itemId?`<label class="rx-list-intro">从已匹配但未纳入的在库资源选择 <select data-rx-import><option value="">手工补录本次申报资源</option>${candidates.map(item=>`<option value="${html(item.resourceId)}" ${value.resourceId===item.resourceId?'selected':''}>${html(item.resourceName)} · ${html(item.resourceId)}</option>`).join('')}</select></label>`:''}<div class="rx-editor"><label>主类 *<select data-rx-edit="mainClassCode">${catalog.mainClasses.map(([code,name])=>`<option value="${code}" ${value.mainClassCode===code?'selected':''} ${catalog.types.some(row=>row[0]===code)?'':'disabled'}>${code} ${html(name)}${catalog.types.some(row=>row[0]===code)?'':'（三级字典待接入）'}</option>`).join('')}</select></label><label>亚类 *<select data-rx-edit="subClassCode"><option value="">请选择亚类</option>${subclasses.map(([code,name])=>`<option value="${code}" ${value.subClassCode===code?'selected':''}>${code} ${html(name)}</option>`).join('')}</select></label><label>基本类 *<select data-rx-edit="basicTypeCode"><option value="">请选择基本类</option>${basic.map(row=>`<option value="${row[3]}" ${value.basicTypeCode===row[3]?'selected':''}>${row[3]} ${html(row[4])}</option>`).join('')}</select></label><label>资源名称 *<input data-rx-edit="resourceName" maxlength="120" value="${html(value.resourceName)}"></label><label class="rx-span">备注（选填）<textarea data-rx-edit="remark" maxlength="2000">${html(value.remark)}</textarea></label></div>${(value.systemWarnings||[]).length?`<div class="rx-banner rx-warning">系统来源提示（不可删除）：${value.systemWarnings.map(html).join('；')}</div>`:''}<div id="resourceEditorError" class="rx-inline-error" role="alert"></div><p class="rx-note">名称中的括号说明会自动分离到备注，不混在资源名称内。</p>`,button('取消','close')+button('保存资源','save-resource',true));
+    show(session.itemId?'编辑资源申报副本':'新增申报资源',`<p class="rx-note">只修改本次申报；不写入资源主库。下级分类来自所附样表，不将未提供的字典伪装成完整标准。</p>${!session.itemId?`<label class="rx-list-intro">从已匹配但未纳入的在库资源选择 <select data-rx-import><option value="">手工补录本次申报资源</option>${candidates.map(item=>`<option value="${html(item.resourceId)}" ${value.resourceId===item.resourceId?'selected':''}>${html(item.resourceName)} · ${html(item.resourceId)}</option>`).join('')}</select></label>`:''}<div class="rx-editor"><label>主类 *<select data-rx-edit="mainClassCode">${catalog.mainClasses.map(([code,name])=>`<option value="${code}" ${value.mainClassCode===code?'selected':''} ${catalog.types.some(row=>row[0]===code)?'':'disabled'}>${code} ${html(name)}${catalog.types.some(row=>row[0]===code)?'':'（三级字典待接入）'}</option>`).join('')}</select></label><label>亚类 *<select data-rx-edit="subClassCode"><option value="">请选择亚类</option>${subclasses.map(([code,name])=>`<option value="${code}" ${value.subClassCode===code?'selected':''}>${code} ${html(name)}</option>`).join('')}</select></label><label>基本类 *<select data-rx-edit="basicTypeCode"><option value="">请选择基本类</option>${basic.map(row=>`<option value="${row[3]}" ${value.basicTypeCode===row[3]?'selected':''}>${row[3]} ${html(row[4])}</option>`).join('')}</select></label><label>资源名称 *<input data-rx-edit="resourceName" maxlength="120" value="${html(value.resourceName)}"></label>${coords.controls(value.coordinateInput)}<label class="rx-span">备注（选填）<textarea data-rx-edit="remark" maxlength="2000">${html(value.remark)}</textarea></label></div>${(value.systemWarnings||[]).length?`<div class="rx-banner rx-warning">系统来源提示（不可删除）：${value.systemWarnings.map(html).join('；')}</div>`:''}<div id="resourceEditorError" class="rx-inline-error" role="alert"></div><p class="rx-note">名称中的括号说明会自动分离到备注，不混在资源名称内。</p>`,button('取消','close')+button('保存资源','save-resource',true));
+    const host=document.querySelector('#resourceOverlay .cx-fields');
+    coords.enhancePair(host,{inputs:[host.querySelector('[data-rx-edit="coordinateLng"]'),host.querySelector('[data-rx-edit="coordinateLat"]')],format:value.coordinateInput.format,dmsValues:value.coordinateInput.dmsValues,onChange:meta=>{Object.assign(value.coordinateInput,meta);host.querySelector('[data-coordinate-result]').textContent=coords.hint(coords.parseInput(value.coordinateInput));}});
   }
   function splitName(name,remark) {
     const notes=[];
@@ -324,6 +368,8 @@
     if(!validSession())return;
     const value=session.editor,error=document.getElementById('resourceEditorError');
     const normalized=splitName(value.resourceName,value.remark);
+    const coordinate=coords.parseInput(value.coordinateInput);
+    if(coordinate.error){if(error)error.textContent=coordinate.error;validationError(coordinate.error,coords.focusTarget(document.querySelector(`[data-rx-edit="${coordinate.axis?'coordinateLat':'coordinateLng'}"]`),coordinate.part));return;}
     const classification=catalog.types.find(row=>row[0]===value.mainClassCode&&row[1]===value.subClassCode&&row[3]===value.basicTypeCode&&!row[3].includes('UNVERIFIED'));
     if(!classification||!normalized.resourceName||normalized.resourceName.length>120||normalized.remark.length>2000){if(error)error.textContent='请选择完整的三级分类并填写资源名称；名称最多120字，备注最多2000字。';const key=!value.subClassCode?'subClassCode':!classification?'basicTypeCode':!normalized.resourceName||normalized.resourceName.length>120?'resourceName':'remark';validationError(error.textContent,`[data-rx-edit="${key}"]`);return;}
     const previous=data(session.project),other=previous.items.filter(item=>item.id!==session.itemId);
@@ -335,13 +381,16 @@
     const classificationNames=[catalog.mainClasses.find(row=>row[0]===value.mainClassCode)[1],classification[2],classification[4]];
     const item={...copy(value),...normalized,classificationNames,id:session.itemId||'MANUAL-'+Date.now()+'-'+(++sequence),sourceType:value.resourceId?'在库匹配':'申报补录',editedFields:session.original?['mainClassCode','subClassCode','basicTypeCode','resourceName','remark'].filter(key=>session.original[key]!==({...value,...normalized})[key]):[]};
     const project=session.project;
+    item.geometry={type:'Point',coordinates:coordinate.coordinates};item.crs=coordinate.crs;
+    item.coordinateConversion=coordinate;
+    if(session.original&&JSON.stringify(session.original.geometry)!==JSON.stringify(item.geometry))item.editedFields.push('geometry');
     if(commit(project,next=>{const index=next.items.findIndex(row=>row.id===item.id);if(index<0)next.items.push(item);else next.items[index]=item;audit(next,index<0?'新增资源':'编辑资源',session.original,item);},session.revision)){selectedRows.set(project.id,item.id);close();refresh(project);toast('资源申报副本已保存。');}
   }
   function snapshot(project,version) {
     if(project.type!=='scenic'||!project.resourceData)return true;
     if(missing(project).length){toast('景区边界有未确认修改，请重新生成清单或放弃修改。');return false;}
     return commit(project,next=>{
-      const frozen={materialVersion:version,at:stamp(),revision:next.revision,confirmed:copy(next.confirmed),items:copy(next.items),audit:copy(next.audit),draftRows:copy(next.draftRows),started:next.started};
+      const frozen={materialVersion:version,at:stamp(),revision:next.revision,confirmed:copy(next.confirmed),items:copy(next.items),audit:copy(next.audit),draftRows:copy(next.draftRows),draftCrs:next.draftCrs||'CGCS2000',draftFormat:next.draftFormat||'dms',draftDmsRows:copy(next.draftDmsRows||next.draftRows.map(point=>point.map(coords.toDms))),started:next.started};
       next.snapshots.push(frozen);
     });
   }
@@ -353,15 +402,30 @@
     const input=event.target,zone=input.closest('[data-rx-zone]');
     if(input.matches('[data-rx-axis]')&&zone&&zone.dataset.rxReadonly==='false'){
       const project=zone._rxProject,index=Number(input.closest('[data-rx-coordinate]').dataset.rxCoordinate),axis=Number(input.dataset.rxAxis),value=input.value;
-      if(!commit(project,next=>{next.started=true;next.draftRows[index][axis]=value;})){input.value=data(project).draftRows[index][axis];return;}
+      if(!commit(project,next=>{next.started=true;next.draftRows[index][axis]=value;if(next.draftDmsRows)next.draftDmsRows[index]=next.draftRows[index].map(coords.toDms);})){input.value=data(project).draftRows[index][axis];return;}
       zone.querySelector('.rx-status').textContent=status(data(project),false);
       zone.querySelectorAll('.rx-error').forEach(error=>error.textContent='');
       zone.querySelector('[data-rx="restore-boundary"]')?.removeAttribute('disabled');
     }
-    if(input.matches('[data-rx-edit]')&&session)session.editor[input.dataset.rxEdit]=input.value;
+    if(input.matches('[data-rx-edit]')&&session&&!captureCoordinate(input))session.editor[input.dataset.rxEdit]=input.value;
   });
   document.addEventListener('change',event=>{
     const input=event.target;
+    if(input.matches('[data-rx-format]')){
+      const zone=input.closest('[data-rx-zone]'),project=zone._rxProject,current=data(project);
+      for(let index=0;index<current.draftRows.length;index++){
+        if(current.draftRows[index].every(value=>!String(value).trim())&&(!current.draftDmsRows?.[index]||coords.dmsEmpty(current.draftDmsRows[index])))continue;
+        const result=coords.parseInput({sourceCrs:'CGCS2000',sourceValues:current.draftRows[index],format:current.draftFormat||'dms',dmsValues:current.draftDmsRows?.[index]});
+        if(result.error){input.value=current.draftFormat||'dms';validationError(result.error,coords.focusTarget(zone.querySelector(`[data-rx-coordinate="${index}"] [data-rx-axis="${result.axis}"]`),result.part));return;}
+      }
+      if(commit(project,next=>{next.draftFormat=input.value;if(input.value==='dms')next.draftDmsRows=next.draftRows.map(point=>point.map(coords.toDms));}))redraw(zone);
+      else input.value=current.draftFormat||'dms';return;
+    }
+    if(input.matches('[data-rx-crs]')){
+      const zone=input.closest('[data-rx-zone]'),project=zone?._rxProject;
+      if(!project||!commit(project,next=>{next.draftCrs=input.value;next.started=true;})){if(project)input.value=data(project).draftCrs||'CGCS2000';return;}
+      redraw(zone);return;
+    }
     if(input.matches('[data-rx-version]')){
       const zone=input.closest('[data-rx-zone]'),version=Number(input.value);
       const snapshot=zone._rxProject.resourceData.snapshots.find(snapshot=>snapshot.materialVersion===version);
@@ -373,6 +437,7 @@
     }
     if(input.matches('[data-rx-keep]')&&session)session.keepRemoved=input.checked;
     if(input.matches('[data-rx-edit]')&&session){
+      if(captureCoordinate(input))return;
       session.editor[input.dataset.rxEdit]=input.value;
       if(input.dataset.rxEdit==='mainClassCode'){session.editor.subClassCode='';session.editor.basicTypeCode='';showEditor();}
       if(input.dataset.rxEdit==='subClassCode'){session.editor.basicTypeCode='';showEditor();}
@@ -397,24 +462,24 @@
       if(action==='view-map'){
         const confirmed=(zone._rxSnapshot||data(project)).confirmed;
         if(!confirmed)return;
-        begin(project,true);session.vertices=copy(confirmed.vertices);showMap();return;
+        begin(project,true);session.vertices=copy(confirmed.vertices);session.coordinateInput=copy(confirmed.coordinateInput||{sourceCrs:'CGCS2000',sourceRows:confirmed.vertices});showMap();return;
       }
       if(readonly||!editable(project))return toast('此材料只能查看。');
       if(action==='go-boundary'){goSection(project,'boundary');return;}
-      if(action==='add-point'){if(commit(project,next=>next.draftRows.push(['',''])))redraw(zone);return;}
+      if(action==='add-point'){if(commit(project,next=>{next.draftRows.push(['','']);next.draftDmsRows?.push(['',''].map(coords.toDms));}))redraw(zone);return;}
       if(action==='delete-point'){
         if(data(project).draftRows.length<=3)return;
-        if(commit(project,next=>{next.draftRows.splice(Number(target.dataset.index),1);next.started=true;}))redraw(zone);return;
+        if(commit(project,next=>{next.draftRows.splice(Number(target.dataset.index),1);next.draftDmsRows?.splice(Number(target.dataset.index),1);next.started=true;}))redraw(zone);return;
       }
       if(action==='restore-boundary'){
         if(!data(project).confirmed)return;
-        if(commit(project,next=>{next.draftRows=next.confirmed.vertices.map(point=>point.map(String));audit(next,'放弃未确认边界修改',null,next.confirmed.boundaryHash);})){redraw(zone);toast('已恢复上次确认边界，清单未改变。');}return;
+        if(commit(project,next=>{next.draftRows=copy(next.confirmed.coordinateInput?.sourceRows||next.confirmed.vertices.map(point=>point.map(String)));next.draftCrs=next.confirmed.coordinateInput?.sourceCrs||'CGCS2000';next.draftFormat=next.confirmed.coordinateInput?.format||'dms';next.draftDmsRows=copy(next.confirmed.coordinateInput?.dmsRows||next.draftRows.map(point=>point.map(coords.toDms)));audit(next,'放弃未确认边界修改',null,next.confirmed.boundaryHash);})){redraw(zone);toast('已恢复上次确认边界，清单未改变。');}return;
       }
       if(action==='generate'){
-        const result=validate(data(project).draftRows);
+        const result=validate(data(project).draftRows,data(project).draftCrs||'CGCS2000',data(project).draftDmsRows,data(project).draftFormat||'dms');
         zone.querySelectorAll('.rx-error').forEach(error=>error.textContent='');
-        if(result.errors.length){result.errors.forEach(error=>{const host=zone.querySelector(`[data-rx-coordinate="${error.row}"] .rx-error`);if(host)host.textContent=error.message;});zone.querySelector(`[data-rx-coordinate="${result.errors[0].row}"] input`)?.focus();return;}
-        begin(project);session.vertices=result.vertices;showMap();return;
+        if(result.errors.length){result.errors.forEach(error=>{const host=zone.querySelector(`[data-rx-coordinate="${error.row}"] .rx-error`);if(host)host.textContent=error.message;});coords.focusTarget(zone.querySelector(`[data-rx-coordinate="${result.errors[0].row}"] [data-rx-axis="${result.errors[0].axis||0}"]`),result.errors[0].part)?.focus();return;}
+        begin(project);session.vertices=result.vertices;session.coordinateInput={sourceCrs:data(project).draftCrs||'CGCS2000',sourceRows:copy(data(project).draftRows),format:data(project).draftFormat||'dms',dmsRows:copy(data(project).draftDmsRows||data(project).draftRows.map(point=>point.map(coords.toDms)))};showMap();return;
       }
       if(['add-resource','edit-resource','delete-resource'].includes(action)){
         const selected=data(project).items.find(item=>item.id===selectedRows.get(project.id));

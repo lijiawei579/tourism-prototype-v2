@@ -9,7 +9,8 @@ function clearValidation(){
 }
 function validationError(message,selector){
   clearValidation();
-  const target=typeof selector==='string'?document.querySelector(selector):selector;
+  const initial=typeof selector==='string'?document.querySelector(selector):selector;
+  const target=window.V2_COORDINATES?.focusTarget(initial)||initial;
   if(!target)return toast(message);
   const group=target.closest('.field,.attach-group,.required-item,.question,.registration-setting-row,.rx-section,.check-line,.radio-group,.choice-grid,.upload-btn')||target;
   group.classList.add('validation-target');
@@ -39,6 +40,7 @@ function applicationIssues(project,includeOptional=false){
       control.value=value;
       if(value.trim()&&(!control.checkValidity()||control.type==='number'&&!control.value))issues.push({step,selector,message:'请检查'+title+'的格式或数值范围'});
     }
+    if(root.querySelector('[data-field="longitude"]'))for(const issue of window.V2_COORDINATES?.issues(project)||[])issues.push({step,selector:`#applyForm [data-field="${issue.key}"]`,message:issue.message});
     if(project.type==='scenic'&&root.querySelector('[data-field="scenicResourceOverview"]'))for(const message of window.V2_RESOURCES?.missing(project)||[])issues.push({step,selector:'#applyForm [data-rx-zone="boundary"]',message});
   });
   if(project.name==='未命名申报项目'&&!issues.some(issue=>issue.selector.includes('Name'))){const key=project.type==='scenic'?'scenicName':project.type==='resort'?'resortApplyName':'summerName';issues.unshift({step:0,selector:`#applyForm [data-field=${JSON.stringify(key)}]`,message:'请填写项目名称'});}
