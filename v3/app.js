@@ -1,0 +1,811 @@
+'use strict';
+const D = window.V2_DATA;
+const STORAGE = 'tourism-prototype-v3-20261124';
+const STAGES = {
+  draft:['申报填报','市州申创人员'],initial:['厅方初审','省厅审核人员'],document:['专家资料审核','评审专家'],
+  'document-summary':['省厅资料审核意见汇总','省厅审核人员'],
+  meeting:['线下专家会议评审','评审专家'],hall:['省文旅厅复审','省厅审核人员'],creation:['现场创建期','市州申创人员'],
+  field:['现场评审','评审专家 / 省厅审核人员'],committee:['上会审定','省厅审核人员'],publicity:['评定结果公示','省厅审核人员'],done:['归档','已办结'],failed:['本年度申报未通过','已办结']
+};
+const ROLES={hall:['省厅审核人员','周晓岚'],city:['市州申创人员','杨雪'],expert:['评审专家','陈立华'],admin:['系统管理员','赵凯']};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=name=>`<i data-lucide="${name}" class="icon"></i>`;
+const today=()=>dateString(new Date());
+const dateString=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addDays=(v,n)=>{const d=new Date(v+'T12:00:00');d.setDate(d.getDate()+n);return dateString(d);};
+const addMonths=(v,n)=>{const d=new Date(v+'T12:00:00');d.setMonth(d.getMonth()+n);return dateString(d);};
+const daysLeft=d=>Math.ceil((new Date(d+'T23:59:59')-new Date())/86400000);
+const workingEnd=start=>{let d=new Date(start+'T12:00:00'),n=0;while(n<7){if(d.getDay()!==0&&d.getDay()!==6)n++;if(n<7)d.setDate(d.getDate()+1);}return dateString(d);};
+const stagePath=p=>['draft','initial','document','document-summary',...(p.type==='scenic'?['meeting','hall']:[]),'creation','field','committee','publicity','done'];
+const cat=id=>(window.V2_CATEGORY_REGISTRY||D.categories).find(c=>c.id===id);
+const expertName=id=>db.experts.find(e=>e.id===id)?.name||id;
+const person=()=>state.role==='expert'?expertName(state.expert):ROLES[state.role][1];
+const DEFERRED_ACTIONS=new Set(['assistant','ai-item','search-materials','run-search','assistant-search']);
+function applyPhaseScope(root=document){
+  root.querySelectorAll('[data-action]').forEach(el=>{if(!DEFERRED_ACTIONS.has(el.dataset.action))return;el.disabled=true;el.setAttribute('aria-disabled','true');el.classList.add('phase-deferred');el.title='本期不开发';if(!el.querySelector('.phase-label'))el.insertAdjacentHTML('beforeend','<small class="phase-label">本期不开发</small>');});
+  root.querySelectorAll('input[data-upload^="ocr"]').forEach(el=>{el.disabled=false;const label=el.closest('label');label?.classList.remove('phase-deferred');label?.removeAttribute('aria-disabled');label?.querySelector('.phase-label')?.remove();});
+  state.assistantOpen=false;document.getElementById('assistant').hidden=true;
+}
+const primary=(text,action,extra='')=>`<button class="btn primary" data-action="${action}" ${extra}>${text}</button>`;
+const button=(text,action,extra='')=>`<button class="btn" data-action="${action}" ${extra}>${text}</button>`;
+const badge=(text,tone='')=>`<span class="badge ${tone}">${esc(text)}</span>`;
+const empty=text=>`<div class="empty">${icon('folder-open')}<p>${text}</p></div>`;
+const field=(name,label,type='textarea',value='',placeholder='')=>{if(value===''||value===null||value===undefined)value=window.V2_DEMO?.fieldDefault(name,type)??value;return `<label class="field"><span>${label}</span>${type==='textarea'?`<textarea name="${name}" rows="4" placeholder="${esc(placeholder)}">${esc(value)}</textarea>`:`<input name="${name}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}">`}</label>`;};
+function demoPreviousRemarks(year){return [
+  {stage:'draft',title:'申报已提交',comment:'已提交4A级旅游景区申报报告书及附件，申请厅方初审。',actor:'市州申创人员',at:`${year}-04-08 09:30`},
+  {stage:'initial',title:'初审退回补充材料',comment:'报告书签章页及资源边界图件不齐，请在10天内补充。',actor:'省厅审核人员',at:`${year}-04-10 14:20`,due:`${year}-04-20`},
+  {stage:'initial',title:'补充材料已提交',comment:'已补齐报告书签章页和资源边界图件，请重新核对。',actor:'市州申创人员',at:`${year}-04-16 10:15`},
+  {stage:'initial',title:'厅方初审通过',comment:'补充材料已收齐，各板块无漏项，提交专家资料审核。',actor:'省厅审核人员',at:`${year}-04-18 15:00`},
+  {stage:'document',title:'专家资料审核意见',comment:'资料目录齐全，建议在景观质量评审中重点核验核心资源边界与图件的一致性。',actor:'评审专家',at:`${year}-04-23 16:30`,internalOnly:true},
+  {stage:'document',title:'资料意见汇总完成',comment:'专家资料意见已汇总，同意进入线下专家会议评审。',actor:'省厅审核人员',at:`${year}-04-25 11:00`},
+  {stage:'meeting',title:'线下专家会议评审意见',comment:'旅游资源价值的文字论述与图件佐证对应不足，建议厅方结合核心资源边界核验情况综合判定。',actor:'评审专家',at:`${year}-05-08 17:00`,internalOnly:true},
+  {stage:'hall',title:'综合评审意见：不通过',comment:'旅游资源价值佐证资料不足。',internal:'核心资源边界与图件不一致，再次申报时重点核验。',actor:'省厅审核人员',at:`${year}-05-12 15:30`}
+];}
+function seed(){
+  const base=(id,name,type,stage,date='2026-08-15',region='黔西南州')=>({id,name,type,stage,date,applicationYear:Number(date.slice(0,4)),statisticsYear:2026,region,unit:region+'文化和旅游局',values:{},files:{},version:1,history:[],assigned:{},reviews:{},sheets:{},avoidance:{},recordCounter:0});
+  const rows=[
+    base('SC-2026-0201','黔西南州兴义刘氏庄园景区','scenic','hall','2026-09-20'),
+    base('SC-2026-0194','平塘县天空之桥景区','scenic','document','2026-09-18','黔南州'),
+    base('SC-2026-0182','赤水丹霞旅游景区','scenic','committee','2025-06-12','遵义市'),
+    base('SC-2026-0164','青岩古镇旅游景区','scenic','field','2025-09-03','贵阳市'),
+    base('SC-2026-0183','荔波小七孔旅游景区','scenic','creation','2025-08-21','黔南州'),
+    base('SC-2026-0173','乌蒙大草原旅游度假区','resort','document','2026-09-08','六盘水市'),
+    base('SC-2026-0179','西江千户苗寨旅游景区','scenic','initial','2026-09-02','黔东南州'),
+    base('SC-2026-0205','黔东南州旅游度假区申报项目','resort','initial','2026-10-08','黔东南州'),
+    base('DRAFT-2026-003','黔东南州4A级旅游景区申报项目','scenic','draft',null||'2026-10-12','黔东南州'),
+    base('SC-2025-0152','西江千户苗寨旅游景区','scenic','done','2025-03-18','黔东南州'),
+    base('SC-2026-0210','黔南州4A级旅游景区申报项目','scenic','publicity','2025-09-15','黔南州'),
+
+    base('SC-2026-0211','黔东南州避暑旅游度假区申报项目','summer-resort','initial','2026-10-07','黔东南州'),
+    base('SC-2026-0220','黔东南州4A级旅游景区会议评审项目','scenic','meeting','2026-10-06','黔东南州'),
+    base('SC-2026-0221','黔东南州旅游度假区创建项目','resort','creation','2026-08-10','黔东南州')
+  ];
+  const ids=['EX-001','EX-002','EX-004','EX-005','EX-007','EX-008','EX-009'];
+  const reviews={};ids.forEach((id,i)=>reviews[id]={decision:'complete',comment:'已核对申报资料，资料具备进入后续评审的条件。',at:'2026-09-25 15:30',version:1});
+  rows.forEach(p=>{
+    if(p.stage!=='draft')p.values=p.type==='scenic'?{scenicName:p.name,scenicBriefName:p.name,scenicApplicant:p.unit,scenicRecommendUnit:p.unit,scenicLevel:'4A级旅游景区'}:p.type==='resort'?{resortApplyName:p.name,resortName:p.name,applicantUnit:p.unit}:{summerName:p.name};
+    const path=stagePath(p),index=path.indexOf(p.stage);
+    path.slice(0,index).filter(k=>k!=='draft').forEach((s,i)=>p.history.push({id:`${p.id}-H${i}`,stage:s,title:STAGES[s][0]+'已完成',comment:s==='initial'?'申报资料完整性审查通过。':s==='document'?'各位专家资料意见已汇总，厅方同意进入下一环节。':s==='hall'?'综合评审意见：通过。':s==='creation'?'创建完成，已申请现场评审。':s==='committee'?'已上传上会材料，等待结果公示。':'该环节已办理，相关结果保存在项目记录中。',actor:s==='creation'?'杨雪':'周晓岚',at:`${p.applicationYear}-09-${String(10+i).padStart(2,'0')} 15:30`,version:1}));
+    if(['meeting','hall','creation','field','committee','publicity','done'].includes(p.stage)) {
+      p.assigned.document=[...ids];p.reviews=clone(reviews);
+      if(p.type==='scenic') {p.assigned.meeting=[...ids];if(p.stage!=='meeting')seedScores(p,'meeting',[86,90,82,88,84,91,87]);}
+    }
+    if(['field','committee','publicity','done'].includes(p.stage)){p.assigned.field=[...ids];if(p.stage!=='field')seedScores(p,'field',[900,912,884,930,899,917,906]);}
+    if(['creation','field','committee','publicity','done'].includes(p.stage)){
+      p.creationStart=['SC-2026-0183','SC-2026-0221'].includes(p.id)?'2026-08-18':'2026-03-18';p.creationEnd=addMonths(p.creationStart,12);p.planDue=addDays(p.creationStart,60);
+      if(!['SC-2026-0183','SC-2026-0221'].includes(p.id))p.creationPlan=[{name:p.name+'创建方案.pdf',size:0,unavailable:true}];
+    }
+    if(Object.keys(p.reviews).length)Object.keys(p.reviews).forEach(id=>p.avoidance[id]={conflict:false,comment:'已在资料审核阶段确认无回避情形。',at:'2026-09-25'});
+  });
+  rows[1].assigned.document=[];
+  rows[5].assigned.document=ids.slice(0,3);rows[5].reviews=clone(reviews);delete rows[5].reviews['EX-004'];rows[5].reviews['EX-002'].decision='supplement';rows[5].reviews['EX-002'].comment='建议补充近期环境监测报告原始数据页。';
+  rows[6].correction={returnStage:'initial',comment:'请补充申请报告书签章页及空间边界相关数据。',due:addDays(today(),10)};
+  rows[6].previous=[{year:2025,result:'未通过',reason:'旅游资源价值佐证资料不足。',internal:'核心资源边界与图件不一致，再次申报时重点核验。',history:demoPreviousRemarks(2025)}];
+  rows[10].publicity={start:today(),end:workingEnd(today()),channel:'贵州省文化和旅游厅官方网站',contact:'厅方正式指定的实名异议渠道',batch:'B-2026-01',unresolved:0};
+  rows[9].publicity={start:'2025-11-03',end:'2025-11-11',channel:'贵州省文化和旅游厅官方网站',batch:'B-2025-01',completed:true};
+  rows[9].statisticsYear=2025;
+  const summaryExample=base('SC-2026-0225','黔东南州景区资料意见汇总项目','scenic','document-summary','2026-10-20','黔东南州');
+  summaryExample.assigned.document=[...ids];summaryExample.reviews=clone(reviews);summaryExample.values={scenicName:summaryExample.name,scenicApplicant:summaryExample.unit,scenicLevel:'4A级旅游景区'};
+  summaryExample.history=[{stage:'document',title:'专家资料审核全部完成',comment:'7位专家均已提交意见，交省厅汇总办理。',actor:'系统',at:'2026-10-25',version:1}];rows.push(summaryExample,base('SC-2026-0310','黔东南州云岭生态景区',legacyScenicType,'initial','2026-11-16','黔东南州'));
+return {schema:5,projects:rows,experts:clone(D.experts),config:{year:2026,deadline:'2026-12-31',correctionDays:10},notices:[{title:'2026年度旅游品牌申创申报工作通知',type:'申报通知',date:'2026-09-01',body:'本年度申创工作按旅游景区质量等级、旅游度假区及避暑旅游度假区分类开展。请市州申创人员按正式通知完善申报资料，确认提交后由省文旅厅开展初审。申报截止时间以厅方正式通知为准。'},{title:'4A级旅游景区评定结果公示',type:'评定公示',date:today(),body:'下列项目已完成现场评审及上会审定，现按程序进行评定结果公示。公示期为7个工作日，仅受理指定渠道的实名异议。',projectIds:[rows[10].id],start:today(),end:workingEnd(today())}]};
+}
+function seedScores(p,stage,totals){
+  const qs=stage==='meeting'?D.landscape:window.SCENIC_SERVICE_RULES.majors.flatMap(m=>m.questions);
+  p.sheets[stage]={};
+  (p.assigned[stage]||[]).forEach((id,n)=>{
+    const ratio=totals[n]/(stage==='meeting'?100:1000);let left=totals[n];const answers={};
+    const allowed=q=>stage==='meeting'||q.mode==='score-range'?[...Array(q.max+1)].map((_,index)=>index):[...new Set([0,...q.options.map(o=>o.score)])].sort((a,b)=>a-b);
+    qs.forEach(q=>{const score=allowed(q).filter(n=>n<=q.max*ratio).at(-1)||0;left-=score;answers[q.id]={score,evidence:[]};});
+    while(left>0){let changed=false;for(const q of qs){const next=allowed(q).find(n=>n>answers[q.id].score&&n-answers[q.id].score<=left);if(next===undefined)continue;left-=next-answers[q.id].score;answers[q.id].score=next;changed=true;if(!left)break;}if(!changed)break;}
+    for(const q of qs){const a=answers[q.id];if(stage==='meeting'){a.integrity=q.integrity?true:undefined;const index=q.options.findIndex(o=>q.integrity?5+o.score===a.score:a.score>=o.min&&a.score<=o.score);a.option=String(index);a.label=q.options[index]?.label||'按正式评分范围给分';}else{const option=q.options?.find(o=>o.score===a.score);a.label=option?.label||option?.description||(a.score?'按细则扣分后计'+a.score+'分':'以上条件均不满足');}a.note=a.score<q.max?'该项佐证尚需完善，按细则扣分。':'';a.rectification=a.score<q.max?'补充对应证明及整改完成情况。':'';}
+    p.sheets[stage][id]={answers,total:totals[n]-left,comment:'已对照正式评分细则完成逐项评审。',submitted:true,at:stage==='meeting'?'2026-09-30 17:10':'2026-10-01 16:40',signature:{name:'专家签字记录',archived:true},required:stage==='meeting'?Object.fromEntries(D.scenicRequired.map((_,index)=>[index,'pass'])):{}};
+  });
+}
+// 增量补齐配置与已有事实，不重置用户已填写的项目和评分。
+function migrateData(data){
+  data.annualSettings??={};const c=data.config;
+  data.annualSettings[c.year]??={...c,updatedAt:null,updatedBy:'',revisions:[]};
+  for(const annual of Object.values(data.annualSettings))annual.categoryPeriods??=Object.fromEntries(D.categories.map(category=>[category.id,{start:`${annual.year}-01-01`,end:annual.deadline}]));
+  for(const annual of Object.values(data.annualSettings))for(const period of Object.values(annual.categoryPeriods))if(period.start||period.end){period.updatedAt??=annual.updatedAt||'原配置，时间未记录';period.updatedBy??=annual.updatedBy||'未记录';}
+  c.categoryPeriods??=clone(data.annualSettings[c.year].categoryPeriods);
+  for(const p of data.projects){
+    p.history??=[];p.recordCounter??=0;
+    p.creationStatus??=p.extension?'extension':p.fieldRequest?'requested':'not-requested';
+    if(p.stage==='field'&&!(p.assigned?.field||[]).length&&!Object.keys(p.sheets?.field||{}).length){p.stage='creation';p.creationStatus='requested';}
+    const docIds=p.assigned?.document||[];
+    if(p.stage==='document'&&docIds.length&&docIds.every(id=>p.reviews?.[id]?.at)){p.stage='document-summary';if(p.correction?.returnStage==='document')p.correction.returnStage='document-summary';}
+    if(p.publicity){p.publicity.objections??=[];if(!p.publicity.objectionRecordsMigrated){if(p.publicity.objectionNote||Number(p.publicity.unresolved)>0)p.publicity.objections.push({id:p.id+'-legacy-objection',projectId:p.id,content:p.publicity.objectionNote||'原记录有'+p.publicity.unresolved+'条未处理异议，待厅方核实明细。',at:today(),actor:'历史记录迁移',legacy:true});p.publicity.objectionRecordsMigrated=true;}}
+    if(p.type==='scenic'&&!String(p.values?.scenicName??'').trim()&&String(p.values?.scenicBriefName??'').trim())p.values.scenicName=p.values.scenicBriefName;
+    if(p.id==='SC-2026-0179')for(const previous of p.previous||[]){if(Number(previous.year)===2025&&previous.reason==='旅游资源价值佐证资料不足。'&&!previous.history?.length)previous.history=demoPreviousRemarks(previous.year);}
+    if(!p.recordsVersion){
+      if(p.stage!=='draft'&&p.date&&!p.history.some(h=>h.title==='申报已提交'))p.history.unshift({id:p.id+'-SUBMITTED',stage:'draft',title:'申报已提交',comment:'市州已提交申报材料，进入厅方初审。',actor:p.unit,at:p.date,version:1,source:'申报时间'});
+      if(p.correction&&!p.history.some(h=>h.comment===p.correction.comment&&/退回|补证/.test(h.title)))p.history.push({id:p.id+'-CORRECTION',stage:p.correction.returnStage||p.stage,title:'厅方退回补充材料',comment:p.correction.comment,actor:'省厅审核人员',at:p.correction.at||null,due:p.correction.due,version:p.version,source:'当前补正要求'});
+      // 老数据曾把本次复审不通过同时写进previous；本次结论只留在本次记录。
+      p.previous=(p.previous||[]).filter(h=>!(Number(h.year)===Number(p.applicationYear)&&p.history.some(r=>r.stage==='hall'&&/不通过/.test(r.title)&&r.comment===h.reason)));
+      p.recordsVersion=1;
+    }
+  }
+  if(!data.summaryPublicityDemoVersion){
+    const source=data.projects.find(p=>p.type==='scenic'&&p.assigned?.document?.length&&p.assigned.document.every(id=>p.reviews?.[id]?.at));
+    if(source&&!data.projects.some(p=>p.id==='SC-2026-0225')){
+      const p=clone(source);p.id='SC-2026-0225';p.name='黔东南州景区资料意见汇总项目';p.stage='document-summary';p.region='黔东南州';p.unit='黔东南州文化和旅游局';p.values.scenicName=p.name;p.values.scenicApplicant=p.unit;p.assigned={document:[...source.assigned.document]};p.sheets={};p.history=[{stage:'document',title:'专家资料审核全部完成',comment:'各位专家已提交资料审核意见，交省厅资料审核意见汇总节点办理。',actor:'系统',at:today(),version:p.version}];delete p.correction;delete p.publicity;delete p.previous;delete p.taskDrafts;delete p.nodeSheets;data.projects.push(p);
+    }
+    const noticeSource=data.projects.find(p=>p.type==='scenic'&&p.stage==='publicity'&&p.publicity);
+    if(noticeSource&&!data.projects.some(p=>p.id==='SC-2026-0226')){
+      const p=clone(noticeSource);p.id='SC-2026-0226';p.name='遵义市海龙屯景区';p.region='遵义市';p.unit='遵义市文化和旅游局';p.values.scenicName=p.name;p.values.scenicApplicant=p.unit;p.publicity={...p.publicity,batch:'B-2026-ARCHIVE',start:addDays(today(),-15),end:addDays(today(),-1),objections:[{id:'OB-0226',projectId:p.id,content:'指定渠道收到关于游步道安全防护设施的实名异议及照片依据，待省厅人工核验。',at:addDays(today(),-3),actor:'省厅审核人员'}],completed:false};p.history=p.history.filter(h=>!['done','failed'].includes(h.stage));delete p.archiveConclusion;delete p.archiveDecision;delete p.taskDrafts;data.projects.push(p);
+    }
+    data.summaryPublicityDemoVersion=1;
+  }
+  addPublicityDemoProjects(data);
+  addEndedPublicityDemoProjects(data);
+  seedProvincialResortProjects(data);
+  seedHotSpringProjects(data);
+  seedLeisureProjects(data);
+  return data;
+}
+// 仅增量添加演示项目；刷新不重建，不覆盖已发布公示、异议或人工结论。
+function addPublicityDemoProjects(data){
+  if(data.publicityDemoVersion20261117)return;
+  const template=seed().projects.find(p=>p.id==='SC-2026-0210');
+  const examples=[
+    ['SC-2026-0230','贵定县金海雪山景区','黔南州',false],
+    ['SC-2026-0231','龙里县龙架山景区','黔南州',false],
+    ['SC-2026-0232','施秉县云台山景区','黔东南州',false],
+    ['SC-2026-0233','镇远县高过河景区','黔东南州',true],
+    ['SC-2026-0234','锦屏县隆里古城景区','黔东南州',true]
+  ];
+  const batch='B-2026-1117',start=today(),end=workingEnd(start);
+  const events=[
+    ['draft','申报已提交','已提交4A级旅游景区申报报告书及附件。','2025-12-20','市州申创人员'],
+    ['initial','厅方初审通过','填报内容与附件完整，已指派资料审核专家。','2025-12-23','省厅审核人员'],
+    ['document','专家资料审核全部完成','7位专家均已提交资料审核意见。','2026-01-05','评审专家'],
+    ['document-summary','资料审核意见汇总完成','省厅汇总专家意见，同意进入线下专家会议评审。','2026-01-07','省厅审核人员'],
+    ['meeting','线下专家会议评审完成','专家原始分数与意见已提交，交省厅综合判定。','2026-01-10','评审专家'],
+    ['hall','综合评审意见：通过','综合评审通过，进入现场创建期。','2026-01-12','省厅审核人员'],
+    ['creation','现场创建事项已办理','已上传创建方案并申请现场评审，省厅已完成专家指派。',addDays(start,-15),'市州申创人员 / 省厅审核人员'],
+    ['field','现场评审通过','已汇总专家评分及现场意见，省厅确认通过并提交上会。',addDays(start,-7),'省厅审核人员'],
+    ['committee','上会审定已完成','已上传会议纪要，等待结果公示。',addDays(start,-2),'省厅审核人员']
+  ];
+  for(const [id,name,region,published]of examples){
+    if(data.projects.some(p=>p.id===id))continue;
+    const p=clone(template);
+    Object.assign(p,{id,name,region,unit:region+'文化和旅游局',date:'2025-12-20',applicationYear:2025,statisticsYear:2026,values:{scenicName:name,scenicBriefName:name,scenicApplicant:region+'文化和旅游局',scenicRecommendUnit:region+'文化和旅游局',scenicLevel:'4A级旅游景区'},creationStart:'2026-01-12',creationEnd:'2027-01-12',planDue:'2026-03-13',creationStatus:'requested',creationPlan:[{name:name+'创建方案.pdf',size:0,unavailable:true}],committeeFiles:[{name:name+'上会会议纪要.pdf',size:0,unavailable:true}],history:events.map(([stage,title,comment,date,actor],i)=>({id:id+'-H'+i,stage,title,comment,at:date+' 15:30',actor,version:1})),recordsVersion:1});
+    delete p.publicity;
+    // 复用完整评分记录，时间对应本项目已办结的两个评审阶段。
+    Object.values(p.reviews).forEach(r=>{r.at='2026-01-05 15:30';});
+    Object.values(p.sheets.meeting||{}).forEach(s=>{s.at='2026-01-10 17:10';});
+    Object.values(p.sheets.field||{}).forEach(s=>{s.at=addDays(start,-8)+' 16:40';});
+    if(published){
+      p.publicity={batch,start,end,channel:'贵州省文化和旅游厅官方网站',contact:'省文化和旅游厅实名异议受理渠道（以正式发布通知为准）',objections:[],objectionRecordsMigrated:true,completed:false};
+      p.history.push({id:id+'-PUBLICITY',stage:'publicity',title:'评定结果公示已发布',comment:`公示期 ${start} 至 ${end}，已纳入本批4A级景区评定结果公示。`,actor:'省厅审核人员',at:start+' 09:00',version:1});
+    }
+    data.projects.push(p);
+  }
+  const ids=examples.filter(x=>x[3]).map(x=>x[0]);
+  if(!data.notices.some(n=>n.projectIds?.some(id=>ids.includes(id))))data.notices.unshift({title:'4A级旅游景区评定结果公示（高过河景区、隆里古城景区）',type:'评定公示',date:start,start,end,projectIds:ids,contact:'省文化和旅游厅实名异议受理渠道（以正式发布通知为准）',body:'下列景区已完成现场评审及上会审定，现予以公示。公示期为7个工作日，仅受理指定渠道的实名异议，异议应有理有据并关联对应景区及创建标准。'});
+  data.publicityDemoVersion20261117=1;
+}
+function addEndedPublicityDemoProjects(data){
+  if(data.publicityArchiveDemo20261117)return;
+  const source=data.projects.find(p=>p.id==='SC-2026-0233');if(!source)return;
+  const start=addDays(today(),-15),end=workingEnd(start);
+  for(const [id,name,region,objection] of [['SC-2026-0235','安顺市旧州古镇景区','安顺市','实名来函反映部分导览标识维护不及时，建议核验整改情况。'],['SC-2026-0236','六盘水市玉舍森林景区','六盘水市','']]){
+    if(data.projects.some(p=>p.id===id))continue;
+    const p=clone(source);Object.assign(p,{id,name,region,unit:region+'文化和旅游局',stage:'publicity',archiveConclusion:'pending',recordCounter:20});
+    p.values={...p.values,scenicName:name,scenicBriefName:name,scenicApplicant:p.unit,scenicRecommendUnit:p.unit};
+    delete p.archiveDecision;p.publicity={batch:'B-2026-ENDED',start,end,channel:'贵州省文化和旅游厅官方网站',contact:'省文化和旅游厅实名异议受理渠道',completed:true,endedAt:addDays(end,1),objections:objection?[{id:id+'-O1',projectId:id,content:objection,at:addDays(start,2)+' 10:20',actor:'周晓岚'}]:[],objectionRecordsMigrated:true};
+    p.history=p.history.filter(h=>h.stage!=='publicity').map((h,i)=>({...h,id:id+'-H'+i,at:(h.stage==='creation'?addDays(today(),-30):h.stage==='field'?addDays(today(),-20):h.stage==='committee'?addDays(today(),-17):String(h.at).slice(0,10))+' 15:30'}));
+    p.history.push({id:id+'-PUBLICITY',stage:'publicity',title:'评定结果公示已发布',comment:`公示期 ${start} 至 ${end}。`,actor:'周晓岚',at:start+' 09:00',version:1});
+    if(objection)p.history.push({id:id+'-CHECK',stage:'publicity',title:'异议核验过程备注',comment:'已向申报单位调取导览标识维护及整改记录。',internal:'需结合补充照片和维护台账人工核验，尚未作出归档结论。',actor:'周晓岚',at:addDays(start,3)+' 16:00',version:1,internalOnly:true});
+    p.history.push({id:id+'-ENDED',stage:'publicity',title:'公示期满，待归档',comment:'公示期已结束，等待省厅批量选择通过或不通过并归档。',actor:'系统',at:addDays(end,1)+' 00:00',version:1,automatic:true});
+    data.projects.push(p);
+  }
+  data.publicityArchiveDemo20261117=1;
+}
+function annualConfig(year){return db.annualSettings[year]||(Number(year)===Number(db.config.year)?db.config:null);}
+function configuredPeriod(year,type){const period=annualConfig(year)?.categoryPeriods?.[type];return !!(period?.start&&period.end);}
+function saveCategoryAnnualConfig(year,type,start,end,editing=false){
+  if(state.role!=='admin'||!cat(type)||!Number.isInteger(year)||year<2025||year>2100||(!editing&&configuredPeriod(year,type)))return false;
+  if(![start,end].every(value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number(value.slice(0,4))===year&&dateString(new Date(value+'T12:00:00'))===value)||end<start)return false;
+  const previous=annualConfig(year),periods=clone(previous?.categoryPeriods||Object.fromEntries(D.categories.map(category=>[category.id,{start:'',end:''}])));
+  periods[type]={...periods[type],start,end,updatedAt:new Date().toLocaleString('zh-CN',{hour12:false}),updatedBy:person()};
+  const deadline=Object.values(periods).map(period=>period.end).filter(Boolean).sort().at(-1)||`${year}-12-31`;
+  return saveAnnualConfig(year,deadline,previous?.correctionDays||10,periods);
+}
+function saveAnnualConfig(year,deadline,correctionDays,categoryPeriods){
+  if(!Number.isInteger(year)||year<2025||year>2100||!/^\d{4}-\d{2}-\d{2}$/.test(deadline)||Number(deadline.slice(0,4))!==year||!Number.isInteger(correctionDays)||correctionDays<1)return false;
+  if(dateString(new Date(deadline+'T12:00:00'))!==deadline)return false;
+  const periods=categoryPeriods??Object.fromEntries(D.categories.map(category=>[category.id,{start:`${year}-01-01`,end:deadline}]));
+  for(const category of D.categories){
+    const period=periods[category.id];
+    if(!period||typeof period.start!=='string'||typeof period.end!=='string')return false;
+    if(!period.start&&!period.end)continue;
+    if(![period.start,period.end].every(value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number(value.slice(0,4))===year&&dateString(new Date(value+'T12:00:00'))===value)||period.start>period.end)return false;
+  }
+  const previous=db.annualSettings[year],at=new Date().toLocaleString('zh-CN',{hour12:false});
+  const revisions=[...(previous?.revisions||[])];
+  if(previous)revisions.push({deadline:previous.deadline,categoryPeriods:clone(previous.categoryPeriods),correctionDays:previous.correctionDays,updatedAt:previous.updatedAt,updatedBy:previous.updatedBy,replacedAt:at,replacedBy:person()});
+  db.annualSettings[year]={year,deadline,categoryPeriods:clone(periods),correctionDays,updatedAt:at,updatedBy:person(),revisions};
+  // 编辑往年记录不切换当前申报年度；新建年份才设为当前申报年度。
+  if(!previous||Number(db.config.year)===year)db.config={year,deadline,categoryPeriods:clone(periods),correctionDays};
+  return true;
+}
+const packedStoragePrefix='lz-string:';
+const draftStoragePrefix=STORAGE+':draft:';
+const draftEdits=new Map();
+const dirtyDrafts=new Set();
+let draftSaveTimer;
+let usingPackedStorage=false;
+function readStoredDatabase(){
+  const value=localStorage.getItem(STORAGE);
+  if(value?.startsWith(packedStoragePrefix)){
+    const decoded=JSON.parse(window.LZString.decompressFromUTF16(value.slice(packedStoragePrefix.length)));
+    usingPackedStorage=true;
+    return decoded;
+  }
+  return JSON.parse(value);
+}
+function writeStoredDatabase(){
+  const json=JSON.stringify(db),codec=window.LZString;
+  if(!usingPackedStorage||!codec){
+    try{localStorage.setItem(STORAGE,json);return;}catch(error){if(!codec||error.name!=='QuotaExceededError')throw error;}
+  }
+  localStorage.setItem(STORAGE,packedStoragePrefix+codec.compressToUTF16(json));
+  usingPackedStorage=true;
+}
+let db;try{db=readStoredDatabase();}catch{}if(db?.schema!==5)db=seed();db=migrateData(db);window.V2_DEMO?.initializeData(db);restoreDraftEdits();
+let state={role:'hall',expert:'EX-001',view:'home',category:'all',filter:'all',query:'',year:2026,project:null,tab:'task',formStep:0,formSection:0,scoreMajor:'1',origin:'projects',selected:new Set(),assignment:null,assistantTab:'review',assistantOpen:false};
+let modalSubmit=null,modalStack=[],priorFocus=null,storageWarning=false;
+function updateDraftIdentity(project){
+  const nameKey=brandReport(project)?.nameKey||(project.type==='scenic'?'scenicName':'summerName');
+  const unitKey=brandReport(project)?.unitKey||(project.type==='scenic'?'scenicApplicant':'summerManagementOrg');
+  if(project.values[nameKey])project.name=project.values[nameKey];
+  if(project.values[unitKey])project.unit=project.values[unitKey];
+}
+function restoreDraftEdits(){
+  for(const project of db.projects){
+    if(project.stage!=='draft'&&!project.correction)continue;
+    try{
+      const stored=localStorage.getItem(draftStoragePrefix+project.id),patch=JSON.parse(stored);
+      if(!patch||patch.version!==project.version||patch.stage!==project.stage||!patch.values)continue;
+      Object.assign(project.values,patch.values);
+      if(patch.coordinateData)project.coordinateData=patch.coordinateData;
+      project.savedAt=patch.savedAt;
+      updateDraftIdentity(project);
+      draftEdits.set(project.id,{patch,stored});
+    }catch{}
+  }
+}
+function draftStatus(project){
+  return dirtyDrafts.has(project.id)?'等待自动暂存…':project.savedAt?'已暂存 '+project.savedAt:'草稿自动保存';
+}
+function updateDraftStatus(message){
+  const status=document.getElementById('savedStatus'),project=getProject();
+  if(status&&project)status.textContent=message||draftStatus(project);
+}
+function queueDraftSave(project,values,includeCoordinates=false){
+  const edit=draftEdits.get(project.id)||{patch:{stage:project.stage,version:project.version,values:Object.create(null)}};
+  Object.assign(edit.patch.values,values);
+  if(includeCoordinates)edit.patch.coordinateData=project.coordinateData;
+  project.savedAt=edit.patch.savedAt=new Date().toLocaleTimeString('zh-CN',{hour12:false});
+  draftEdits.set(project.id,edit);
+  dirtyDrafts.add(project.id);
+  updateDraftStatus();
+  if(draftSaveTimer===undefined)draftSaveTimer=setTimeout(flushDraftEdits,350);
+}
+function flushDraftEdits(){
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer=undefined;
+  if(!dirtyDrafts.size)return;
+  try{
+    for(const id of dirtyDrafts){
+      const edit=draftEdits.get(id),stored=JSON.stringify(edit.patch);
+      localStorage.setItem(draftStoragePrefix+id,stored);
+      edit.stored=stored;
+      dirtyDrafts.delete(id);
+    }
+    updateDraftStatus();
+  }catch{save();}
+}
+function save(){
+  try{writeStoredDatabase();}
+  catch{
+    updateDraftStatus('暂存失败 · 本次修改仍在当前页面');
+    if(!storageWarning){storageWarning=true;toast('浏览器存储空间不足，当前会话仍可操作；请下载已上传的大文件。');}
+    return false;
+  }
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer=undefined;
+  for(const [id,edit] of draftEdits){
+    try{if(edit.stored&&localStorage.getItem(draftStoragePrefix+id)===edit.stored)localStorage.removeItem(draftStoragePrefix+id);}catch{}
+  }
+  draftEdits.clear();
+  dirtyDrafts.clear();
+  updateDraftStatus();
+  return true;
+}
+function getProject(id=state.project){return db.projects.find(p=>p.id===id);}
+function summary(p,stage){const ids=p.assigned[stage]||[],records=ids.map(id=>({id,...(stage==='document'?p.reviews[id]:p.sheets[stage]?.[id])}));const completed=records.filter(r=>stage==='document'?!!r.at:!!r.submitted);return {ids,records,completed,total:ids.length};}
+function creationStatusLabel(p){return {'not-requested':'未申请现场评审',requested:'已申请现场评审',extension:'申请延期'}[p.creationStatus]||'未申请现场评审';}
+function stageLabel(p){if(p.correction)return '待补充材料';if(p.stage==='creation')return creationStatusLabel(p);if(p.stage==='document'){const s=summary(p,'document');return !s.total?'待指派资料审核专家':'专家资料审核中';}if(p.stage==='document-summary')return '待省厅汇总办理';if(p.stage==='field'&&!(p.assigned.field||[]).length)return '待指派现场评审专家';if(p.stage==='hall')return '待复审';if(p.stage==='committee')return '待上会';if(p.stage==='publicity')return !p.publicity?'等待结果公示':p.publicity.completed||today()>p.publicity.end?'公示期满 · 待归档':today()<p.publicity.start?'等待公示开始':'公示中';if(p.stage==='done')return p.archiveConclusion==='pending'?'已归档 · 待人工确认结论':'申创成功';if(p.stage==='failed')return '申创未通过 · 已归档';if(p.stage==='draft')return '草稿';return STAGES[p.stage][0];}
+function canHandle(p){
+  if(['done','failed'].includes(p.stage))return false;
+  if(state.role==='city')return p.stage==='draft'||!!p.correction||p.stage==='creation';
+  if(p.correction)return false;
+  if(state.role==='hall')return ['initial','document-summary','hall','creation','committee','publicity'].includes(p.stage)||(['document','field','meeting'].includes(p.stage)&&(summary(p,p.stage).total===0||summary(p,p.stage).completed.length===summary(p,p.stage).total));
+  if(state.role==='expert')return ['document','meeting','field'].includes(p.stage)&&(p.assigned[p.stage]||[]).includes(state.expert)&&!(p.stage==='document'?p.reviews[state.expert]?.at:p.sheets[p.stage]?.[state.expert]?.submitted)&&!p.avoidance[state.expert]?.conflict;
+  return false;
+}
+function visibleProjects(){return db.projects.filter(p=>state.role==='expert'?Object.values(p.assigned).some(ids=>ids.includes(state.expert))||(p.formerExperts||[]).includes(state.expert):state.role==='city'?p.region==='黔东南州':true);}
+function nextAction(p){if(state.role==='city')return p.correction?'补充材料':p.stage==='draft'?'继续填报':p.stage==='creation'?'办理创建事项':'查看项目';if(state.role==='expert')return canHandle(p)?p.stage==='document'?'审核资料':'进入评分':'查看记录';return canHandle(p)?p.stage==='initial'?'审查资料':p.stage==='hall'?'办理复审':p.stage==='committee'?'上传上会材料':p.stage==='document'&&!summary(p,'document').total?'指派专家':p.stage==='publicity'?'查看公示事项':'进入办理':'查看项目';}
+function render(){
+  const navs=state.role==='hall'?[['home','工作台','layout-dashboard'],['projects','申创项目','folder'],['publicity','待公示项目','megaphone'],['archive','归档项目','archive'],['experts','专家库','users-round']]:state.role==='city'?[['home','工作台','layout-dashboard'],['projects','我的申创项目','folder'],['archive','归档项目','archive']]:state.role==='expert'?[['home','工作台','layout-dashboard'],['projects','评审项目','folder'],['archive','历史评审记录','archive']]:[['home','工作台','layout-dashboard'],['settings','年度申报设置','settings-2'],['rules','评分项管理','list-checks']];
+  document.getElementById('nav').innerHTML=navs.map(([v,n,i])=>`<button class="nav-btn ${state.view===v||(state.view==='project'&&v===state.origin)?'active':''}" data-nav="${v}">${icon(i)}${n}${v==='publicity'?`<span class="count">${db.projects.filter(p=>p.stage==='publicity'&&D.categories.some(category=>category.id===p.type)).length}</span>`:''}</button>`).join('');
+  document.getElementById('role').value=state.role;
+  document.getElementById('identity').innerHTML=`<div class="person">${icon('user-round')}<strong>${esc(person())}</strong>${state.role==='city'?'· 黔东南州':''}</div>${state.role==='expert'?`<select class="expert-switch" id="expertSelect" aria-label="选择演示专家">${db.experts.map(e=>`<option value="${e.id}" ${e.id===state.expert?'selected':''}>${esc(e.name)}</option>`).join('')}</select>`:''}`;
+  document.getElementById('today').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('avatar').textContent=person().slice(0,1);
+  document.getElementById('topbarName').textContent=person();
+  document.getElementById('topbarRole').textContent=ROLES[state.role][0];
+  document.getElementById('main').dataset.view=state.view;
+  const title={home:'工作台',projects:'项目列表',archive:'归档项目',publicity:'待公示项目',experts:'专家库',settings:'年度申报设置',rules:'评分项管理',new:'选择申创类别',apply:'申报填报',project:'项目详情'}[state.view]||'工作台';
+  document.getElementById('breadcrumb').innerHTML=`<span>旅游品牌申创</span> / <strong>${title}</strong>`;
+  const content={home:dashboard,projects:()=>projectList('projects'),archive:()=>projectList('archive'),publicity:publicityList,experts:expertLibrary,settings:settings,rules:rulesPage,new:categoryPage,apply:applyPage,project:projectPage};
+  document.getElementById('main').innerHTML=(window.V2_DEMO?.notice()||'')+(content[state.view]||dashboard)();
+  window.V2_DEMO?.prepare(document.getElementById('main'));
+  watchScoreDock();
+  if(state.view==='apply')hydrateForm(document.getElementById('applyForm'),getProject(),false);
+  if(state.view==='project')hydrateForm(document.getElementById('submittedForm'),getProject(),true);
+  restoreTaskDraft();
+  document.getElementById('assistantTrigger').hidden=state.view!=='project'||!['hall','expert'].includes(state.role);
+  if(document.getElementById('assistantTrigger').hidden){state.assistantOpen=false;document.getElementById('assistant').hidden=true;}
+  applyPhaseScope();icons();focusPendingValidation();
+}
+function icons(){window.lucide?.createIcons({attrs:{class:'icon'}});}
+function pageHead(title,desc,actions='',eyebrow='旅游品牌申创'){return `<div class="page-head"><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1><p>${desc}</p></div><div class="actions">${actions}</div></div>`;}
+function pipeline(p,stat=false){const path=stagePath(p),i=path.indexOf(p.stage==='failed'?p.history.at(-1)?.stage:p.stage),last=p.stage==='done',linked=stat&&['hall','city','expert'].includes(state.role);return `<div class="pipeline" aria-label="申创业务链路">${path.map((k,n)=>{const count=visibleProjects().filter(x=>x.statisticsYear===state.year&&x.type===p.type&&x.stage===k).length,tag=linked?'button':'div';return `<${tag} ${linked?`type="button" data-flow-stage="${k}" data-flow-category="${p.type}" aria-label="查看${state.year}年度${esc(cat(p.type).name)}${STAGES[k][0]}项目"`:''} class="pipe-step ${linked?'pipe-step-link ':''}${!stat?(last?'done':n===i?p.stage==='failed'?'stopped':'current':n>i?'future':'done'):''}"><span>${String(n+1).padStart(2,'0')}${!stat&&n<i?' · 已完成':!stat&&n===i&&p.stage==='failed'?' · 未通过':''}</span><strong>${STAGES[k][0]}</strong><small>${STAGES[k][1]}</small>${stat?`<b>${count}<small style="display:inline;margin-left:5px">项目</small></b>`:''}${linked?'<small class="pipe-step-link-hint">点击查看 →</small>':''}</${tag}>`;}).join('')}</div>`;}
+function dashboard(){
+  const all=visibleProjects().filter(p=>p.statisticsYear===state.year),active=all.filter(p=>!['done','failed'].includes(p.stage)),todo=active.filter(canHandle);
+  const newBtn=state.role==='city'?newApplicationButton():button(icon('folder')+'查看项目列表','nav-projects');
+  return pageHead(`你好，${esc(person())}`,`${ROLES[state.role][0]} · ${state.role==='city'?'黔东南州':'贵州省'} · 从项目开始办理每一件事`,newBtn,'工作台 / WORKSPACE')+
+`<div class="stats"><button class="stat stat-link" data-action="open-todo"><span class="stat-icon" aria-hidden="true">${icon('clipboard-list')}</span><span>需要我处理</span><strong>${todo.length}</strong><p>点击查看当前待办 →</p></button><button class="stat stat-link" data-action="open-active"><span class="stat-icon" aria-hidden="true">${icon('folder-open')}</span><span>进行中的项目</span><strong>${active.length}</strong><p>${state.year}年度办理项目 →</p></button><button class="stat stat-link" data-action="open-creation"><span class="stat-icon" aria-hidden="true">${icon('building-2')}</span><span>现场创建中</span><strong>${all.filter(p=>p.stage==='creation').length}</strong><p>查看方案上传与评审申请 →</p></button><button class="stat stat-link" data-action="open-archive"><span class="stat-icon" aria-hidden="true">${icon('circle-check')}</span><span>已办结项目</span><strong>${all.filter(p=>['done','failed'].includes(p.stage)).length}</strong><p>查看归档 →</p></button></div>`+
+    `<div class="stack">${state.role==='city'&&!applicationOpening().open?`<div class="alert"><p>${esc(applicationOpening().reason)}</p></div>`:''}
+    <section class="panel"><div class="panel-head"><div><h2>申创业务链路</h2><p>统计当前停留在各环节的项目，往年申报、本年现场评审计入本年。</p></div><div class="actions"><select id="dashboardCategory" aria-label="业务链路申创类别">${D.categories.filter(c=>c.enabled).map(c=>`<option value="${c.id}" ${state.flowCategory===c.id?'selected':''}>${c.name}</option>`).join('')}</select><select id="dashboardYear" aria-label="统计年度">${[2026,2025].map(y=>`<option ${state.year===y?'selected':''}>${y}</option>`).join('')}</select></div></div>${pipeline({type:state.flowCategory||'scenic',stage:'draft'},true)}</section>
+    ${announcementPanel()}</div>`;
+}
+function visibleNoticeIds(notice){return (notice.projectIds||[]).filter(id=>D.categories.some(category=>category.id===getProject(id)?.type));}
+function announcementPanel(){return `<section class="panel"><div class="panel-head"><div><h2>公告</h2><p>申报通知、公示与评定结果</p></div>${icon('megaphone')}</div>${db.notices.map((n,i)=>({n,i})).filter(({n})=>!n.projectIds?.length||visibleNoticeIds(n).length).map(({n,i})=>`<button class="announcement" data-action="notice" data-index="${i}">${badge(n.type,n.type.includes('公示')?'amber':'green')}<div><strong>${esc(n.title)}</strong><small>${n.start?`${n.start} 至 ${n.end}`:'贵州省文化和旅游厅'}</small></div><span class="notice-date">${n.date}</span>${icon('chevron-right')}</button>`).join('')}</section>`;}
+function categoryChips(){return `<div class="categories">${[{id:'all',name:'全部类别'},...D.categories].map(c=>`<button class="chip ${state.category===c.id?'active':''}" data-category="${c.id}" ${c.enabled===false?'disabled':''}>${c.name}${c.enabled===false?' · 开发中':''}</button>`).join('')}</div>`;}
+function projectList(view){
+  const archived=view==='archive';let rows=visibleProjects().filter(p=>archived?['done','failed'].includes(p.stage):!['done','failed'].includes(p.stage)&&(state.includePublicity||p.stage!=='publicity'));
+  if(state.role!=='hall'&&!archived)rows=visibleProjects().filter(p=>!['done','failed'].includes(p.stage));
+  rows=filterProjectRows(rows);
+  rows.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  return pageHead(archived?'归档项目':state.role==='expert'?'评审项目':'申创项目',archived?'查看已办结项目的材料、结论和历史评分，归档记录不可编辑。':'先选择项目，再办理当前环节。初审通过后直接指派专家，其他正式提交返回项目列表。',state.role==='city'&&!archived?newApplicationButton():'',archived?'项目档案 / ARCHIVE':'申创管理 / PROJECTS')+
+    categoryChips()+`<section class="panel"><div class="filters"><label class="search">${icon('search')}<input id="projectSearch" placeholder="搜索项目名称、编号或申报单位" value="${esc(state.query)}"></label><select id="projectFilter" aria-label="筛选办理事项"><option value="all" ${state.filter==='all'?'selected':''}>全部项目</option>${!archived?`<option value="todo" ${state.filter==='todo'?'selected':''}>需要我处理</option><option value="handled" ${state.filter==='handled'?'selected':''}>我已办理 / 参与</option>`:''}${Object.entries(STAGES).filter(([k])=>archived?['done','failed'].includes(k):!['done','failed'].includes(k)&&(k!=='publicity'||state.includePublicity)).map(([k,v])=>`<option value="${k}" ${state.filter===k?'selected':''}>${v[0]}</option>`).join('')}</select>${state.listYear?`<span class="badge">${state.listYear}年度${button('清除年度','clear-list-year')}</span>`:''}<span class="muted" id="rowCount">${rows.length} 个项目</span></div><div id="projectRows">${table(rows)}</div><div class="sort-note">按申创时间由近到远排列 · 已办包含尚未办结但本人处理过的项目 · 草稿可只读查看，未提交不能审核</div></section>`;
+}
+function table(rows){if(!rows.length)return empty('没有符合条件的项目。');return `<div class="table-wrap"><table class="project-table"><thead><tr><th>申创项目</th><th>申创类别 / 市州</th><th>申创时间</th><th>当前环节</th><th>办理状态</th><th>操作</th></tr></thead><tbody>${rows.map(p=>`<tr><td><strong>${esc(p.name)}</strong><small>${p.id} · ${esc(p.unit)}</small></td><td>${p.type==='scenic'?'4A级旅游景区':p.type==='resort'?'旅游度假区':cat(p.type)?.name||p.type}<small>${p.region}</small></td><td>${p.stage==='draft'?'未提交':p.date}<small>${p.applicationYear}年度申报</small></td><td>${STAGES[p.stage][0]}</td><td>${badge(stageLabel(p),p.stage==='done'?'green':p.stage==='failed'?'red':p.correction?'red':canHandle(p)?'amber':'gray')}</td><td><button class="btn small ${canHandle(p)?'primary':''}" data-open-project="${p.id}">${nextAction(p)} ${icon('arrow-right')}</button></td></tr>`).join('')}</tbody></table></div>`;}
+function openProject(id){state.project=id;state.tab='task';state.formSection=0;state.scoreMajor='1';state.origin=['projects','archive','publicity'].includes(state.view)?state.view:'projects';const project=getProject();if(state.role==='city'&&project?.region==='黔东南州'&&project.stage==='draft')return resumeApplication(project);navigate('project/'+id);}
+function projectPage(){
+  const p=getProject();if(!p)return empty('未找到该项目。');
+  const authorized=visibleProjects().some(x=>x.id===p.id);if(!authorized)return empty('当前角色无权查看该项目。请切换角色或返回项目列表。');
+  const draft=p.stage==='draft';const archived=['done','failed'].includes(p.stage);
+  const split=usesReviewLayout(p);
+  const current=archived?archiveResultPanel(p):split&&p.stage==='initial'&&state.role==='hall'&&!p.correction?initialConclusion(p):work(p);
+  if(archived&&state.tab==='task')state.tab='records';
+  return `<button class="text-btn back" data-action="back-list">${icon('arrow-left')}返回${state.origin==='archive'?'归档项目':state.origin==='publicity'?'待公示项目':'项目列表'}</button><section class="project-head"><div class="project-title"><div><span class="eyebrow">${p.id} / ${cat(p.type).name}</span><h1>${esc(p.name)}</h1><div class="project-meta"><span>${esc(p.unit)}</span><span>${p.stage==='draft'?'尚未提交':`申创时间 ${p.date}`}</span><span>${p.applicationYear}年度</span>${isHotSpring(p)&&p.values.hotGrade?`<span>${hotSpringKinds[p.values.hotKind]} · ${hotSpringGrades[hotSpringGrade(p)]}</span>`:''}</div></div><div class="actions">${badge(stageLabel(p),p.stage==='failed'?'red':archived?'green':canHandle(p)?'amber':'gray')}${state.role==='hall'&&!draft&&!archived&&stagePath(p).indexOf(p.stage)>=2?button(icon('users-round')+'专家指派','assign'):''}</div></div>${pipeline(p)}</section>
+    <div class="project-utility"><span>当前责任：${esc(STAGES[p.stage][1])}</span><div class="actions">${!draft&&!split?button(icon('files')+'申报方提交材料','materials-modal'):''}${previousApplicationButton(p)}${button('本次流转记录','go-records')}</div></div>
+    ${split?reviewLayout(p,current):`<div class="project-work-area">${current}</div><div id="projectRecords">${records(p)}</div>`}`;
+}
+function usesReviewLayout(p){return (p.stage!=='draft'||state.role==='hall')&&!(state.role==='city'&&p.correction)&&!(state.role==='expert'&&['document','meeting','field'].includes(p.stage));}
+function reviewLayout(p,current){return `<div class="project-review-layout"><section class="task-card project-materials-panel" aria-labelledby="projectMaterialsTitle"><header class="task-heading"><div><h2 id="projectMaterialsTitle">${p.stage==='draft'?'申报填报内容':'申报材料'}</h2><p>${p.stage==='draft'?'市州当前暂存的填报内容与附件 · 尚未正式提交':`市州提交的填报内容与附件 · 材料版本 V${p.version||1}`} · 只读</p></div>${badge('不可编辑','gray')}</header>${submitted(p)}</section><aside class="project-review-sidebar" aria-label="审批与流程节点"><section class="project-approval-panel" aria-labelledby="projectApprovalTitle"><header class="project-panel-heading"><h2 id="projectApprovalTitle">${['done','failed'].includes(p.stage)?'办结结果':p.stage==='draft'?'填报状态':'当前办理'}</h2><span>${esc(STAGES[p.stage][0])}</span></header><div class="project-work-area">${current}</div></section><div id="projectRecords">${records(p,true)}</div></aside></div>`;}
+function work(p){
+  if(p.correction){if(state.role==='city')return `<section class="task-card"><div class="task-heading"><div><h2>补充申报材料</h2><p>补正截止 ${p.correction.due} · ${daysLeft(p.correction.due)} 天</p></div>${badge('需要你处理','red')}</div><div class="alert">${icon('file-warning')}<div><strong>厅方补正要求</strong><p>${esc(p.correction.comment)}</p></div></div><p>在原填报内容上修改并重新提交。${['document','document-summary'].includes(p.correction.returnStage)?'提交后回到省厅资料审核意见汇总，原专家意见保留。':'提交后回到厅方初审。'}</p><div class="footer">${primary('修改并补充材料 '+icon('arrow-right'),'edit-application')}</div></section>`;return waiting(p,'正在等待市州补充材料',`已要求 ${p.correction.due} 前完成补正。补正期间审核操作暂停。`);}
+  if(p.stage==='draft')return state.role==='city'?`<section class="task-card"><h2>申报草稿</h2><p class="muted">未提交前可随时暂存、继续填写。提交后省厅才能开展初审。</p><div class="footer">${primary('继续填报','edit-application')}</div></section>`:waiting(p,'等待市州正式提交',`可只读查看当前暂存的填报内容与附件，不可修改或审核。正式提交后才开放厅方初审。${p.savedAt?'最近暂存：'+esc(p.savedAt)+'。':''}`);
+  if(p.stage==='initial')return state.role==='hall'?initial(p):waiting(p,'等待厅方初审','省厅核对表单、附件和签章是否齐全，本环节不做内容达标判定。');
+  if(p.stage==='document')return documentTask(p);
+  if(p.stage==='document-summary')return documentSummaryTask(p);
+  if(p.stage==='meeting'||p.stage==='field')return scoringTask(p);
+  if(p.stage==='hall')return state.role==='hall'?hallReview(p):waiting(p,'等待省文旅厅复审','厅方结合专家意见形成综合评审意见，内部打分不对申报方公开。');
+  if(p.stage==='creation')return creation(p);
+  if(p.stage==='committee')return state.role==='hall'?committee(p):waiting(p,'等待上会审定','现场评审已结束，省文旅厅上传上会材料后进入等待结果公示。');
+  if(p.stage==='publicity')return publicityTask(p);
+  return records(p);
+}
+function waiting(p,title,desc){return `<section class="task-card"><div class="task-heading"><div><h2>${title}</h2><p>${desc}</p></div>${badge('无需你操作','gray')}</div><div class="alert gray">${icon('clock-3')}<div><strong>当前环节：${STAGES[p.stage][0]}</strong><p>办理主体：${STAGES[p.stage][1]}</p></div></div><div class="footer">${p.stage==='draft'?'':button(icon('files')+'查看申报材料','materials-modal')}${button(icon('history')+'查看办理记录','go-records')}</div></section>`;}
+const sections=p=>brandReport(p)?brandReportSections:p.type==='summer-resort'?['申报对象与范围','运行数据','综合说明','自评与推荐材料','附件']:p.type==='scenic'?['基本信息与景区简况','景区基本数据','景区申请报告','附件']:['基本信息','范围与资源设施','经营与管理','综合说明','附件'];
+function clampFormSection(p,index){return Math.max(0,Math.min(applicationForms(p).length,Number(index)||0));}
+function formValue(p,key){const value=p.values?.[key];return p.type==='scenic'&&key==='scenicName'&&!String(value??'').trim()?p.values?.scenicBriefName??value:value;}
+function submitted(p){state.formSection=clampFormSection(p,state.formSection);return `<div class="submitted-materials"><div class="section-nav" role="tablist" aria-label="申报材料章节">${sections(p).map((s,i)=>`<button type="button" role="tab" aria-selected="${state.formSection===i}" aria-controls="submittedForm" class="btn small ${state.formSection===i?'active':''}" data-form-section="${i}">${s}</button>`).join('')}</div><div id="submittedForm" role="tabpanel" aria-label="${sections(p)[state.formSection]}">${state.formSection===applicationForms(p).length?attachments(p,false):applicationForms(p)[state.formSection]}</div></div>`;}
+function setSubmittedSection(index){const p=getProject(),root=document.getElementById('submittedForm');if(!p||!root)return;state.formSection=clampFormSection(p,index);root.innerHTML=state.formSection===applicationForms(p).length?attachments(p,false):applicationForms(p)[state.formSection];root.setAttribute('aria-label',sections(p)[state.formSection]);root.closest('.submitted-materials').querySelectorAll('[data-form-section]').forEach(button=>{const active=Number(button.dataset.formSection)===state.formSection;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));});hydrateForm(root,p,true);icons();}
+function initialConclusion(p){return `<section class="task-card"><h3>初审结论</h3><div class="alert gray">${icon('list-checks')}<div><p>本环节只核对资料是否齐全、有无漏项，不判断内容是否达标。</p></div></div><div class="radio-group"><label class="radio-card"><input type="radio" name="initialDecision" value="pass" checked><span>资料齐全，通过初审</span></label><label class="radio-card"><input type="radio" name="initialDecision" value="supplement"><span>资料不全，退回补充</span></label></div>${field('initialComment','初审意见 *','textarea','','写明通过结论或缺失材料')}${field('correctionDays','补正时限（天）','number',annualConfig(p.applicationYear)?.correctionDays||10)}<p class="helper">退回时生效，可按项目调整。通过后进入资料审核专家指派。</p><div class="footer">${primary('提交初审结论','submit-initial')}</div></section>`;}
+function initial(p){return `<div class="task-heading"><div><h2>厅方初审</h2><p>查看市州提交的原始内容，仅确认材料完整性。内容不可修改。</p></div>${badge('省厅审核人员办理','amber')}</div><div class="material-layout"><section class="task-card">${submitted(p)}</section><aside class="sticky">${initialConclusion(p)}</aside></div>`;}
+function documentTask(p){
+  const s=summary(p,'document');
+  if(state.role==='hall'){
+    if(!s.total)return `<section class="task-card"><div class="task-heading"><div><h2>指派资料审核专家</h2><p>厅方初审已完成。先选择专家，再开展线上资料审核。</p></div>${badge('需要你处理','amber')}</div><p>每位专家分别核验材料是否能够支撑申报标准并提交意见。厅方汇总后决定补证或进入下一环节。</p><div class="footer">${primary(icon('users-round')+'选择专家','assign')}</div></section>`;
+    return `<section class="task-card"><div class="task-heading"><div><h2>专家资料审核进度</h2><p>${s.completed.length} / ${s.total} 位专家已提交。全部完成后进入独立的省厅资料审核意见汇总节点。</p></div>${button('改派专家','assign')}</div>${reviewTable(p)}<div class="alert gray"><p>本节点等待专家提交，省厅办理决定在下一汇总节点操作。</p></div></section>`;
+  }
+  if(state.role!=='expert')return waiting(p,'等待专家资料审核','专家独立意见汇总至厅方后，由厅方决定是否补充材料或进入下一环节。');
+  const r=p.reviews[state.expert];if(!(p.assigned.document||[]).includes(state.expert)||r?.at)return `<section class="task-card"><h2>${r?.at?'本人资料意见已提交':'当前无本人资料审核任务'}</h2>${r?.at?`<div class="alert green">${icon('lock-keyhole')}<div><strong>${r.decision==='complete'?'资料具备评审条件':'建议补充材料'}</strong><p>${esc(r.comment)}</p><p>${r.at} · 提交后只读</p></div></div>`:''}<div class="footer">${button('查看申报材料','materials-modal')}${button('查看办理记录','go-records')}</div></section>`;
+  if(!p.avoidance[state.expert])return avoidancePrompt(p);
+  if(p.avoidance[state.expert].conflict)return waiting(p,'已提交回避申请','请等待省厅改派专家。你仍可查看已发生的过程记录。');
+  if(p.type==='resort')return resortDocumentTask(p);
+  if(isHotSpring(p))return hotSpringDocumentTask(p);
+  if(materialCheckCategory(p))return conditionDocumentTask(p);
+  return `<div class="task-heading"><div><h2>专家资料审核</h2><p>与厅方初审查看同一份提交材料，核验资料支撑性，本环节不打分。</p></div>${badge('评审专家办理','amber')}</div><div class="material-layout"><section class="task-card">${submitted(p)}</section><aside class="task-card sticky"><h3>本人资料审核意见</h3><p class="helper">${person()} · 本项目已完成回避确认</p><div class="radio-group" style="margin-top:18px"><label class="radio-card"><input type="radio" name="expertDocumentDecision" value="complete" checked><span>资料具备评审条件</span></label><label class="radio-card"><input type="radio" name="expertDocumentDecision" value="supplement"><span>资料需要补充</span></label></div>${field('expertDocumentComment','审核意见 *','textarea','','说明支撑依据或需要补充的具体材料')}<div class="footer">${primary('提交本人意见','submit-document-expert')}</div></aside></div>`;
+}
+function reviewTable(p){const s=summary(p,'document'),hot=isHotSpring(p),structured=materialCheckCategory(p),details=hot||structured||p.type==='resort';return `<div class="table-wrap"><table><thead><tr><th>专家</th><th>意见</th>${details?`<th>${hot||structured?'条件材料核验':'细则一核验结果'}</th>`:''}<th>意见说明</th><th>提交时间</th></tr></thead><tbody>${s.records.map(r=>`<tr><td>${expertName(r.id)}</td><td>${badge(r.at?(r.decision==='complete'?'具备评审条件':'需补充材料'):'未提交',r.at?'green':'gray')}</td>${details?`<td>${esc(structured?conditionDocumentSummary(p,r):hot?hotSpringDocumentSummary(r):resortMaterialSummary(r))}${r.at?'<br>'+button('核验明细','resort-review-record',`data-expert="${r.id}"`):''}</td>`:''}<td style="white-space:normal;max-width:440px">${esc(r.comment||'—')}</td><td>${r.at||'—'}</td></tr>`).join('')}</tbody></table></div>`;}
+function avoidancePrompt(p){return `<section class="task-card"><div class="task-heading"><div><h2>开始评审前，请确认回避情况</h2><p>每位专家在本项目整个周期只确认一次。签字在完成评分后进行。</p></div>${badge('评审前确认','amber')}</div><div class="radio-group"><label class="radio-card"><input type="radio" name="avoidDecision" value="clear" checked><span>不存在影响公正评审的利害关系<small>包括本人及近亲属利益关系、参与项目策划建设、经济往来等情形。</small></span></label><label class="radio-card"><input type="radio" name="avoidDecision" value="conflict"><span>存在回避情形，需要申请回避</span></label></div>${field('avoidComment','回避情况说明（申请回避时必填）')}<div class="footer">${primary('确认并继续','confirm-avoidance')}</div></section>`;}
+function sheetFor(p,stage,id=state.expert){p.sheets[stage]??={};p.sheets[stage][id]??={answers:{},required:{},comment:'',uploads:{},submitted:false};p.sheets[stage][id].type=p.type;window.V2_DEMO?.fillSheet(p,stage,p.sheets[stage][id]);return p.sheets[stage][id];}
+function scoringTask(p){
+  if(state.role==='city')return waiting(p,p.stage==='meeting'?'等待线下专家会议评审':'等待现场评审','评审专家独立提交评审记录，厅方汇总办理。');
+  if(state.role==='hall'){
+    const s=summary(p,p.stage);return `<section class="task-card"><div class="task-heading"><div><h2>${STAGES[p.stage][0]}</h2><p>厅方负责组织与汇总。${(isLeisureBlock(p)||isLegacyScenic(p))?'每位专家独立提交评审结果和建议。':'每位专家独立评分，厅方可查看原始结果。'}</p></div>${button(icon('users-round')+(s.total?'调整专家组':'选择专家'),'assign')}</div>${s.total?scoreTable(p,p.stage):empty('尚未指派现场专家。默认沿用第一次参评专家，可以改选。')}${s.total&&s.completed.length===s.total?`<div class="alert green">${icon('circle-check')}<p>本环节全部专家评审记录已提交。</p></div>${p.stage==='meeting'?primary('进入省文旅厅复审','to-hall'):`<div class="radio-group"><label class="radio-card"><input type="radio" name="fieldDecision" value="pass" checked><span>现场评审通过，进入上会审定</span></label><label class="radio-card"><input type="radio" name="fieldDecision" value="reject"><span>现场评审不通过，结束本年度申报并归档</span></label></div>${field('fieldHallComment','现场评审汇总意见 *')}<div class="footer">${primary('提交现场评审结论','submit-field-hall')}</div>`}`:`<div class="alert gray">${icon('clock-3')}<p>全部专家提交评审记录后，才可提交本环节结论。</p></div>`}</section>`;
+  }
+  if(state.role!=='expert')return waiting(p,'评审进行中','本环节由受派专家办理。');
+  if(!(p.assigned[p.stage]||[]).includes(state.expert))return waiting(p,'当前专家未被指派本环节','可查看申报资料及已发生的过程记录。');
+  if(!p.avoidance[state.expert])return avoidancePrompt(p);
+  if(p.avoidance[state.expert].conflict)return waiting(p,'已申请回避','等待厅方重新指派专家。');
+  const sh=sheetFor(p,p.stage);if(sh.submitted)return `<section class="task-card"><h2>本人评分已提交</h2><div class="alert green">${icon('lock-keyhole')}<div><strong>${resortLegacySheet(p,sh)?'核验记录已锁定':'评审记录已锁定 · '+(isLegacyScenic(p)?legacyFieldResult(sh):isLeisureBlock(p)?leisureFieldSummary(sh):isHotSpring(p)?hotSpringFieldSummary(sh):sh.summerScoringStatus==='not-started'?'综合评价未开展':sh.total+' 分')}</strong><p>${sh.at} · ${esc(sh.comment)}</p></div></div><div class="footer">${button(isLeisureBlock(p)?'查看逐条核验记录':'查看评审记录','score-record',`data-stage="${p.stage}" data-expert="${state.expert}"`)}</div></section>`;
+  if(p.type==='resort')return resortField(p,sh);
+  if(isHotSpring(p))return hotSpringFieldTask(p,sh);
+  if(isLeisureBlock(p))return leisureFieldTask(p,sh);
+  if(isLegacyScenic(p))return legacyFieldReview(p,sh);
+  return scoreEditor(p,sh);
+}
+function scoreQuestions(p,stage){
+  if(isHotSpring(p))return hotSpringRules.majors;
+  if(isLeisureBlock(p))return leisureFieldGroups.map(group=>({id:group.id,name:group.title,questions:group.items.map(([id,title])=>({id,title}))}));
+  const configured=configuredScoreMajors(p,stage);if(configured)return configured;
+  if(stage==='meeting')return [{id:'1',name:'旅游资源吸引力',max:70,questions:D.landscape.filter(q=>q.major==='旅游资源吸引力')},{id:'2',name:'旅游市场影响力',max:30,questions:D.landscape.filter(q=>q.major==='旅游市场影响力')}];
+  if(p.type==='scenic')return window.SCENIC_SERVICE_RULES.majors;
+  if(p.type==='resort')return resortFieldMajors;
+  return window.SUMMER_EVALUATION_RULES.majors.map(m=>({id:m.id,name:m.name,max:m.max,questions:m.sections.flatMap(s=>s.groups.map(g=>({id:g.key,title:g.name,max:g.max,mode:g.mode==='binary'&&/每.*[加扣]|每增加/.test(g.name)?'score-range':g.mode,summer:true,note:s.name,options:g.options.map(o=>({key:o.key,label:o.description,score:o.score,deduction:o.deduction})),group:g})))}));
+}
+function scoreTotal(sh){if(sh.type==='hot-spring')return sh.submitted?sh.total:hotSpringTotal(sh);if(sh.type==='resort')return resortScoreSum(resortFieldMajors.flatMap(m=>m.questions),sh.answers);if(sh.type==='summer-resort')return window.SUMMER_EVALUATION_RULES.majors.reduce((sum,m)=>sum+Math.min(m.max,m.sections.flatMap(s=>s.groups).reduce((n,g)=>n+(Number(sh.answers[g.key]?.score)||0),0)),0)+Math.min(20,Number(sh.answers.innovation?.score)||0);return Object.values(sh.answers).reduce((s,a)=>s+(Number.isFinite(Number(a.score))?Number(a.score):0),0);}
+function scoreEditor(p,sh){
+  const majors=scoreQuestions(p,p.stage),qs=majors.flatMap(m=>m.questions),active=majors.find(m=>m.id===state.scoreMajor)||majors[0];state.scoreMajor=active.id;
+  const required=requiredFor(p,p.stage);
+  const summer=p.type==='summer-resort',scoreOpen=!summer||summerCanScore(p,sh);
+  const splitRules=p.type==='scenic'&&p.stage==='meeting',context=[p.id,p.stage,state.expert].join(':');
+  if(state.scoreContext!==context){state.scoreContext=context;state.scoreSection='required';}
+  const requiredSection=`${required.length?`<section class="task-card" style="margin-bottom:20px"><h3>${p.stage==='meeting'?'细则一 · 质量等级划分前提条件':'10项必备条件'}</h3>${summer?`<div class="attach-head"><p class="helper">全部达标后开放综合评价。有不达标项时，提交核验记录及现场意见。</p>${button('填入演示核验','summer-fill-required')}</div>`:'<p class="helper">初始选择为达标，请逐项核验。不达标也可以提交不通过意见。</p>'}${required.map((text,i)=>`<div class="required-item"><p>${i+1}. ${text}</p><div class="choice-grid"><label><input type="radio" name="required-${i}" data-required="${i}" value="pass" ${(sh.required[i]||(!summer?'pass':''))==='pass'?'checked':''}>达标</label><label><input type="radio" name="required-${i}" data-required="${i}" value="fail" ${sh.required[i]==='fail'?'checked':''}>不达标</label><button class="text-btn" data-action="ai-item" data-title="${esc(text)}">${icon('search')}AI检索</button></div></div>`).join('')}</section>`:''}`;
+  const scoringSection=scoreOpen?`<div class="score-layout"><aside class="score-nav">${majors.map(m=>`<button data-score-major="${m.id}" class="${m.id===active.id?'active':''}">${m.name}<small>${m.questions.length}项 · ${m.max}分</small></button>`).join('')}${p.type==='summer-resort'?'<button data-score-major="innovation">创新加分<small>最高20分</small></button>':''}</aside><section>${active.questions.map(q=>question(p,q,sh)).join('')}</section></div>`:'';
+  return `<div class="score-review"><div class="task-heading"><div><h2>${p.stage==='meeting'?'线下专家会议评审':'现场评分'}</h2><p>${p.stage==='meeting'?'细则一前提条件核验 · 细则二资源价值100分 · 4A分值要求80分':p.type==='scenic'?`细则三 · ${majors.length}大项${qs.length}个评分项 · 1000分 · 4A分值要求850分`:'避暑旅游度假区评价细则 · 500分 · 认定门槛450分'} · ${person()}</p></div></div>
+    ${p.stage==='field'&&p.type==='scenic'?`<div class="alert green">${icon('lock-keyhole')}<div><strong>第一阶段评分已完成，记录只读</strong><p>本阶段使用旅游设施与服务质量细则，第一阶段旅游资源价值评分保持独立。</p></div>${button('查看第一阶段评分','score-record',`data-stage="meeting" data-expert="${state.expert}"`)}</div>`:''}
+    <div class="score-dock"><div class="score-toolbar"><div><span class="score-total" id="scoreTotal">${scoreOpen?`${scoreTotal(sh)} <small>/ ${p.stage==='meeting'?100:p.type==='scenic'?1000:500} 分</small>`:'待核验必备条件'}</span><p class="helper" id="scoreProgress">${scoreOpen?`已填 ${qs.filter(q=>sh.answers[q.id]?.score!==undefined).length} / ${qs.length} 项 · 草稿自动保存`:Object.values(sh.required).includes('fail')?'已记录不达标项 · 综合评价未开展':'逐项确认后开放评分'}</p></div><div class="actions">${button(icon('files')+'申报方提交材料','materials-modal')}${p.stage==='meeting'?upload('评分表附件 / OCR','ocr-meeting'):button(icon('upload')+'现场附件与问题汇总','field-uploads')}${primary(scoreOpen?'完成评分并签字':'提交现场核验并签字','finish-score')}</div></div>${splitRules?`<div class="score-rule-tabs" role="tablist" aria-label="会议评审细则">${[['required','细则一 · 前提条件'],['scoring','细则二 · 旅游资源价值评分']].map(([section,title])=>`<button type="button" id="score-rule-${section}" role="tab" data-score-section="${section}" aria-controls="score-panel-${section}" aria-selected="${state.scoreSection===section}" tabindex="${state.scoreSection===section?0:-1}">${title}</button>`).join('')}</div>`:''}</div>
+    ${splitRules?`<section id="score-panel-required" class="score-rule-panel" role="tabpanel" aria-labelledby="score-rule-required" ${state.scoreSection==='required'?'':'hidden'}>${requiredSection}</section><section id="score-panel-scoring" class="score-rule-panel" role="tabpanel" aria-labelledby="score-rule-scoring" ${state.scoreSection==='scoring'?'':'hidden'}>${scoringSection}</section>`:requiredSection+scoringSection}
+    <section class="task-card score-opinion">${field('scoreComment','本阶段综合意见 *','textarea',sh.comment,'写明本阶段评价依据与主要问题')}</section></div>`;
+}
+function setScoreSection(section,focus=false){if(!['required','scoring'].includes(section)||!document.getElementById('score-panel-'+section))return;state.scoreSection=section;document.querySelectorAll('[data-score-section]').forEach(tab=>{const selected=tab.dataset.scoreSection===section;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;if(selected&&focus)tab.focus();});for(const name of ['required','scoring'])document.getElementById('score-panel-'+name).hidden=name!==section;}
+var scoreDockObserver;
+function watchScoreDock(){scoreDockObserver?.disconnect();const dock=document.querySelector('.score-dock');if(!dock)return;const measure=()=>dock.parentElement.style.setProperty('--score-dock-height',dock.getBoundingClientRect().height+'px');measure();if(window.ResizeObserver){scoreDockObserver=new ResizeObserver(measure);scoreDockObserver.observe(dock);}}
+function scoreOptions(q){
+  if(q.mode==='score-range')return [...Array(Math.floor(q.max)+1)].map((_,i)=>({label:i===q.max?'0分 · 以上条件均不满足':`${q.max-i}分`,score:q.max-i}));
+  return (q.options||[]).filter(o=>o.score>0).sort((a,b)=>b.score-a.score).concat([{label:'以上条件均不满足',score:0,key:'none'}]);
+}
+function question(p,q,sh,locked=false){
+  const a=sh.answers[q.id]||{},land=p.stage==='meeting';
+  let choices='';
+  if(land&&q.integrity){choices=`<div class="choice-grid"><label><input type="radio" name="integrity" data-integrity="yes" ${a.integrity===true?'checked':''}>空间完整</label><label><input type="radio" name="integrity" data-integrity="no" ${a.integrity===false?'checked':''}>空间不完整（本项0分）</label></div><div class="options">${q.options.map((o,i)=>`<label class="option"><input type="radio" name="${q.id}" data-score="${q.id}" data-opt="${i}" data-val="${5+o.score}" ${a.option===String(i)?'checked':''}><span>${esc(o.label)}</span><b>${5+o.score}分</b></label>`).join('')}</div>`;}
+  else if(land&&q.mode!=='score-range'){choices=`<div class="options">${q.options.map((o,i)=>`<label class="option"><input type="radio" name="${q.id}" data-score="${q.id}" data-opt="${i}" data-val="${o.score}" ${a.option===String(i)?'checked':''}><span>${esc(o.label)}</span><b>${o.min===o.score?o.score:`${o.score}—${o.min}`}分</b></label>`).join('')}</div><label class="field" style="margin-top:12px"><span>本项实际评分（应在所选档次内）</span><input type="number" data-exact-score="${q.id}" min="0" max="${q.max}" value="${a.score??''}"></label>`;}
+  else if(q.summer&&q.mode==='multiple') {choices=`<div class="options">${q.options.map(o=>`<label class="option"><input type="checkbox" data-summer-multi="${q.id}" data-option="${o.key}" data-val="${o.score}" ${(a.options||[]).includes(o.key)?'checked':''}><span>${esc(o.label)}</span><b>${o.score}分</b></label>`).join('')}<label class="option"><input type="checkbox" data-summer-multi="${q.id}" data-option="none" data-val="0" ${(a.options||[]).includes('none')?'checked':''}><span>以上条件均不满足</span><b>0分</b></label></div><p class="helper">按正式细则累计，最高${q.max}分。</p>`;}
+  else {choices=`<div class="options">${scoreOptions(q).map((o,i)=>`<label class="option"><input type="radio" name="${q.id}" data-score="${q.id}" data-opt="${o.key||i}" data-val="${o.score}" ${a.option===String(o.key||i)?'checked':''}><span>${esc(o.label)}</span><b>${o.score}分</b></label>`).join('')}</div>`;}
+  return `<article class="question" data-question="${q.id}"><div class="question-head"><div><small>${q.path?.map(s=>s.name).join(' / ')||q.major||'正式评分细则'}</small><h3>${esc(q.title)}</h3></div>${badge('满分 '+q.max+' 分')}</div><p>${esc(q.note||'请根据对应材料和现场证据核验后评分。')}${q.subcriteria?.length?'<br>'+q.subcriteria.map(c=>esc(c.description||c.label||JSON.stringify(c))).join('<br>'):''}</p>${locked?`<div class="alert gray"><p>本人评分：${a.score??'未填'} / ${q.max}分<br>已选项：${esc(a.label||'历史评分记录')}</p></div>`:choices}<div class="question-actions"><button class="text-btn" data-action="ai-item" data-title="${esc(q.title)}">${icon('search')}AI全文检索</button>${p.stage==='field'&&!locked?`<button class="text-btn" data-action="item-evidence" data-question="${q.id}">${icon('camera')}现场证据 ${a.evidence?.length?`(${a.evidence.length})`:''}</button>${q.assistance==='map-distance'?`<button class="text-btn" data-action="map-assist" data-title="${esc(q.title)}">${icon('map')}地图辅助核验</button>`:''}`:''}</div><div class="score-note">${field('deduction-'+q.id,'扣分依据','textarea',a.note||'')}${field('rectification-'+q.id,'整改要求','textarea',a.rectification||'')}</div></article>`;
+}
+function scoreTable(p,stage){if(isLegacyScenic(p))return legacyFieldReviewTable(p,stage);const s=summary(p,stage),counted=scoringCalculation(p),leisure=isLeisureBlock(p);return `<p class="helper">${stage==='meeting'?'景观质量评分 · 满分100分':p.type==='scenic'?'现场评分 · 满分1000分':p.type==='resort'?'细则二 · 综合评价满分1000分 · 省级参考800分':isHotSpring(p)?'附录 B、C · 综合评分满分900分 · '+hotSpringGrades[hotSpringGrade(p)]+'参考 '+hotSpringReference[hotSpringGrade(p)]+' 分 · 满意度参考 70 分':leisure?'第5章必要条件与第6章一般条件现场核验':p.type==='summer-resort'?'避暑综合评价 · 满分500分 · 总分参考450分，各基本大项得分率参考60%':'现场评审记录'}</p><div class="table-wrap"><table><thead><tr><th>专家</th><th>提交情况</th><th>${leisure?'专家建议':'实际得分'}</th>${stage==='meeting'&&state.role==='hall'?'<th>均分计算</th>':''}<th>意见</th><th>${leisure?'核验明细':'评审明细'}</th></tr></thead><tbody>${s.records.map(r=>`<tr><td>${expertName(r.id)}</td><td>${badge(r.submitted?'已提交':'未提交',r.submitted?'green':'gray')}</td><td>${r.submitted?resortLegacySheet(p,r)?'历史符合性意见':p.type==='resort'?r.total+' / 1000 分 · '+(r.total>=resortRules.fieldReference?'达到':'低于')+'参考分值':leisure?leisureFieldSummary(r):isHotSpring(p)?esc(hotSpringFieldSummary(r)):r.summerScoringStatus==='not-started'?'综合评价未开展 · 必备条件未达标':r.total+'分':'—'}</td>${stage==='meeting'&&state.role==='hall'?`<td>${r.submitted?badge(counted.find(x=>x.id===r.id)?.excluded||'计入均分',counted.find(x=>x.id===r.id)?.excluded?'amber':'green'):'—'}</td>`:''}<td style="white-space:normal;max-width:300px">${esc(r.submitted?r.comment:'等待专家独立提交')}</td><td>${r.submitted?button('查看明细','score-record',`data-stage="${stage}" data-expert="${r.id}"`):'—'}</td></tr>`).join('')}</tbody></table></div>`;}
+function hallReview(p){
+  const s=summary(p,'meeting');const scores=s.completed.map(r=>Number(r.total)).filter(Number.isFinite),ready=s.total>0&&s.completed.length===s.total;
+  return `<section class="task-card"><div class="task-heading"><div><h2>省文旅厅复审</h2><p>汇总专家原始评分，结合资料、舆情、安全事件和部门意见形成综合判定。</p></div>${button('申报方提交材料','materials-modal')}</div><div id="hallScoreTable">${scoreTable(p,'meeting')}</div>
+    ${ready?`<div class="summary-grid"><div class="summary-item"><span>已提交专家</span><strong>${s.completed.length} / ${s.total}</strong></div><div class="summary-item"><span>计入均分人数</span><strong id="effectiveScoreCount">${scoringCalculation(p).filter(x=>!x.excluded).length}</strong></div><div class="summary-item"><span>计算均分 / 100分</span><strong id="averageScore">${averageScore(p).toFixed(2)}</strong></div></div><div class="actions"><label class="check-line"><input type="checkbox" id="removeHigh" ${p.removeHigh?'checked':''}>去掉1个最高分</label><label class="check-line"><input type="checkbox" id="removeLow" ${p.removeLow?'checked':''}>去掉1个最低分</label></div><p class="helper">仅调整本次汇总算法，每位专家原始评分永久保留。最终结论由厅方综合判定。</p>`:`<div class="alert gray">${icon('clock-3')}<p>专家评分尚未全部提交，不能提交复审。</p></div>`}
+    <div class="actions" style="margin:20px 0">${previousApplicationButton(p)}${button(icon('search')+'项目舆情与部门资料','hall-context')}</div><div class="radio-group"><label class="radio-card"><input type="radio" name="hallDecision" value="pass" checked ${ready?'':'disabled'}><span>综合评审意见：通过<small>进入现场创建期，不安排本阶段公示。</small></span></label><label class="radio-card"><input type="radio" name="hallDecision" value="reject" ${ready?'':'disabled'}><span>综合评审意见：不通过<small>本年申报资格终止，保留历史未通过原因。</small></span></label></div>${field('hallComment','对申报方的综合评审意见 *','textarea','','不通过时写明申报方可见的原因')}${field('internalRemark','厅方内部拒绝备注','textarea','','仅省文旅厅可见，不向申报方或专家展示')}<div class="footer">${primary('提交复审结论','submit-hall',ready?'':'disabled')}</div></section>`;
+}
+function averageScore(p){let a=summary(p,'meeting').completed.map(r=>Number(r.total)).filter(Number.isFinite).sort((x,y)=>x-y);if(p.removeHigh)a.pop();if(p.removeLow)a.shift();return a.length?a.reduce((s,n)=>s+n,0)/a.length:0;}
+function creation(p){
+  const own=state.role==='city'&&p.region==='黔东南州',hall=state.role==='hall',hasPlan=p.creationPlan?.length;
+  const publicOpinion=p.history.filter(h=>['hall','document-summary'].includes(h.stage)&&!h.internalOnly).at(-1);
+  return `<section class="task-card"><div class="task-heading"><div><h2>现场创建期</h2><p>${p.creationStart} 至 ${p.creationEnd} · 默认1年创建周期</p></div>${badge(creationStatusLabel(p),'amber')}</div><div class="metric-list"><div>创建方案提醒日期<strong>${p.planDue}</strong></div><div>创建期参考结束日期<strong>${p.creationEnd}</strong></div><div>现场申请状态<strong>${creationStatusLabel(p)}</strong></div></div><div class="alert ${hasPlan?'green':daysLeft(p.planDue)<0?'':'gray'}">${icon(hasPlan?'circle-check':'clock-3')}<div><strong>${hasPlan?'创建方案已上传':daysLeft(p.planDue)>=0?`创建方案上传倒计时：${daysLeft(p.planDue)}天`:'创建方案上传已逾期，请尽快补传'}</strong><p>创建方案保留60天上传提醒；是否上传不影响申请状态或后续流转，省厅可查看和下载。</p></div></div>${today()>p.creationEnd?'<div class="alert"><p>已超过创建期参考结束日期，仅提醒，不自动判定失败或归档；后续由省厅决定是否指派专家。</p></div>':''}<h3>创建方案</h3>${hasPlan?fileRows(p,'creationPlan',p.creationPlan,own):empty('尚未上传创建方案')}${own?upload(hasPlan?'继续添加方案文件':'上传创建方案','creationPlan'):''}<h3 style="margin-top:24px">批复及评审意见</h3><div class="alert gray"><div><strong>${esc(publicOpinion?.title||'同意进入现场创建期')}</strong><p>${esc(publicOpinion?.comment||'请按标准开展创建，省厅指派现场专家后进入现场评审。')}</p></div></div>${hall||state.role==='expert'?button('查看专家原始意见','document-records'):''}<p class="helper">申报方查看厅方公开批复及整改要求；原始评分仅厅方与专家可见。</p>${p.fieldRequest?`<div class="alert gray"><div><strong>现场评审申请记录</strong><p>${esc(p.fieldRequest.at)} · ${esc(p.fieldRequest.actor)}；已记录申请，尚不代表进入现场评审。</p></div></div>`:''}${p.extension?`<div class="alert gray"><div><strong>延期申请记录</strong><p>申请延至 ${esc(p.extension.date)} · ${esc(p.extension.reason)}</p><p>仅记录申请延期状态，不设置延期审批节点，也不自动调整原创建期限。</p></div></div>`:''}<div class="alert gray"><p>“未申请现场评审 / 已申请现场评审 / 申请延期”均为当前创建期状态，不是流程节点。只有省厅确认指派现场专家后才进入现场评审；未申请、无方案或申请延期均不阻止省厅指派。</p></div><div class="footer">${own?button('申请延期','extension',p.creationStatus==='extension'?'disabled':'')+primary('申请现场评审','request-field',p.creationStatus==='requested'?'disabled':''):''}${hall?primary(icon('users-round')+'指派专家并进入现场评审','request-field'):''}</div></section>`;
+}
+function committee(p){return `<section class="task-card"><div class="task-heading"><div><h2>上会审定</h2><p>现场评审结束后，上传专题会或党组会的会议纪要等上会印证材料。</p></div>${badge('待上会','amber')}</div>${p.committeeFiles?.length?fileRows(p,'committeeFiles',p.committeeFiles,true):empty('尚未上传上会材料')}${upload('上传上会材料','committeeFiles')}<p class="helper">本环节只上传附件，不设置重复打分或综合评定表。确认完成后进入“待公示项目”。</p><div class="footer">${primary('确认上会完成','submit-committee',p.committeeFiles?.length?'':'disabled')}</div></section>`;}
+function publicityTask(p){
+  const phase=publicityPhase(p),action=state.role!=='hall'?button('查看公告','nav-home'):phase==='active'?primary('登记异议','publicity-batch',`data-project="${p.id}"`):`<button class="btn primary" data-rw-open="publicity" data-rw-target="${phase==='ended'?'ended':'pending'}">${phase==='ended'?'进入公示管理批量归档':'进入公示管理'}</button>`;
+  return `<section class="task-card"><h2>${esc(stageLabel(p))}</h2>${p.publicity?`<div class="metric-list"><div>公示开始<strong>${p.publicity.start}</strong></div><div>公示结束<strong>${p.publicity.end}</strong></div><div>发布渠道<strong>${esc(p.publicity.channel)}</strong></div></div><div class="alert gray"><div><strong>7个工作日公示期</strong><p>指定渠道收到的实名异议须关联具体项目登记。期满后仍在公示管理，由省厅批量选择通过或不通过并归档；不通过须逐项目填写原因，异议记录完整保留。</p></div></div>`:`<p class="muted" style="margin-top:12px">已完成上会，由省厅在公示管理菜单中批量选择并配置公示。</p>`}<div class="footer">${action}</div></section>`;
+}
+function records(p,compact=false){
+  const list=(p.history||[]).filter(h=>['hall','expert'].includes(state.role)||!h.internalOnly);
+  return `<section class="task-card records-card"><div class="task-heading"><div><h2>${compact?'流程节点与办理记录':'本次申报办理记录'}</h2><p>${p.applicationYear}年度 · ${esc(p.id)}${compact?' · 仅展示已发生的办理过程':' · 查看谁在何时办理、作出什么意见，以及退回后需要补充的内容。'}</p></div>${compact?'':previousApplicationButton(p)}</div><div class="alert ${p.correction?'':'gray'}"><div><strong>当前进度：${esc(stageLabel(p))}</strong><p>${p.correction?`当前停留在${STAGES[p.stage][0]}；由市州补充后交回${STAGES[p.correction.returnStage||p.stage][0]}。补正截止：${esc(p.correction.due)}`:`当前环节：${STAGES[p.stage][0]} · ${STAGES[p.stage][1]}`}</p></div></div>${list.length?list.map(h=>`<details class="history-item" ${p.correction&&h.comment===p.correction.comment?'open':''}><summary><strong>${esc(h.title)} ${badge(STAGES[h.stage]?.[0]||'流程记录','gray')}</strong><small>${esc(h.actor)} · ${esc(h.at||'时间未记录')}</small></summary><div class="history-content"><p>${esc(h.comment)}</p>${h.due?`<p>补正截止：${esc(h.due)}</p>`:''}${state.role==='hall'&&h.internal?`<div class="internal"><strong>厅方内部备注 · 来源：本次省文旅厅复审</strong><p>${esc(h.internal)}</p><small>仅省文旅厅可见，不向申报方或专家展示。</small></div>`:''}<p class="helper">材料版本 V${h.version||1} · 提交记录不可编辑${h.source?' · 依据：'+esc(h.source):''}</p>${['meeting','field'].includes(h.stage)&&state.role!=='city'&&Object.values(p.sheets[h.stage]||{}).some(s=>s.submitted)?button('查看原始评分记录','stage-records',`data-stage="${h.stage}"`):''}${h.files?.length?fileRows(p,'history-'+h.id,h.files,false):''}</div></details>`).join(''):empty(p.stage==='draft'?'本次申报尚未提交。草稿可继续修改，正式提交后开始生成办理记录。':'本次申报暂无已保存的办理记录。')}${['hall','expert'].includes(state.role)&&Object.values(p.assigned||{}).some(ids=>ids.length)?`<h3 style="margin-top:25px">本次专家意见与评分记录</h3><p class="helper">按实际已指派的阶段查看，已提交的意见与评分不可编辑。</p>${['document','meeting','field'].filter(s=>(p.assigned[s]||[]).length).map(s=>`<details class="history-item"><summary><strong>${STAGES[s][0]}</strong><small>${p.assigned[s].map(expertName).join('、')}</small></summary><div class="history-content">${s==='document'?reviewTable(p):scoreTable(p,s)}</div></details>`).join('')}`:''}</section>`;
+}
+function record(p,title,comment,extra={}){p.history.push({id:p.id+'-R'+(++p.recordCounter),stage:p.stage,title,comment,actor:person(),at:new Date().toLocaleString('zh-CN',{hour12:false}),version:p.version,...(p.correction?{due:p.correction.due}:{}),...extra});}
+function transition(p,stage,title,comment,extra={}){record(p,title,comment,extra);p.stage=stage;delete p.taskDrafts;save();closeModal();state.tab='task';state.filter='all';navigate('projects');toast('已提交，返回项目列表');}
+function beginCreation(p,comment){p.creationStart=today();p.creationEnd=addMonths(today(),12);p.planDue=addDays(today(),60);transition(p,'creation','综合评审意见：通过',comment);}
+function categoryPage(){if(state.role!=='city')return empty('仅市州申创人员可以新建申报。');const year=new Date().getFullYear();return `<button class="text-btn back" data-action="back-list">${icon('arrow-left')}返回项目列表</button>${pageHead('请选择申创类别',`${year}年度 · 各类别独立开放报名；开始日、截止日当天均可申报。未到报名时间或已截止的类别仅可查看。`,'','新建申报 / APPLICATION')}<div class="category-grid">${D.categories.map(category=>{const opening=applicationOpening(category.id,year),period=opening.period;return `<button class="category-card registration-card ${opening.status}" data-new-type="${category.id}" ${opening.open?'':'disabled'} title="${esc(opening.reason)}"><span class="registration-card-top"><span class="category-icon">${icon(category.icon)}</span>${badge(opening.label,opening.open?'green':opening.status==='upcoming'?'amber':'gray')}</span><strong>${category.name}</strong><p>${category.subtitle}</p><span class="registration-period"><span>${year}年度申创时间</span>${period?.start&&period.end?`<time>${esc(period.start)}</time><span class="period-divider">至</span><time>${esc(period.end)}</time>`:'<span>申报时间待公布</span>'}</span><span class="registration-countdown">${esc(opening.reason)}</span><span class="registration-entry">${opening.open?'开始填报 →':opening.label}</span></button>`;}).join('')}</div>`;}
+function createApplication(type){if(!cat(type)?.enabled||state.role!=='city')return;const year=new Date().getFullYear(),opening=applicationOpening(type,year);if(!opening.open)return toast(opening.reason);const id='SC-'+year+'-'+Date.now().toString().slice(-6);const p={id,name:'未命名申报项目',type,stage:'draft',unit:'黔东南州文化和旅游局',region:'黔东南州',applicationYear:year,statisticsYear:year,date:null,values:{},files:{},version:0,history:[],assigned:{},reviews:{},sheets:{},avoidance:{},recordCounter:0};if(type==='resort')p.resortReportVersion=resortRules.version;window.V2_DEMO?.initializeProject(p);db.projects.unshift(p);state.project=id;state.formStep=0;save();navigate('apply/'+id+'/0');}
+function applyPage(){const p=getProject();if(!p||state.role!=='city'||p.region!=='黔东南州'||!(p.stage==='draft'||p.correction))return empty('当前项目不在可填报或补正状态。');const step=state.formStep=clampFormSection(p,state.formStep),last=applicationForms(p).length;return `<button class="text-btn back" data-action="back-list">${icon('arrow-left')}返回项目列表</button>${pageHead(p.correction?'补充申报材料':'申报填报',cat(p.type).name+' · '+p.applicationYear+'年度 · 未提交前可以随时暂存',(isHotSpring(p)&&p.stage==='draft'?hotSpringHistoryButton():'')+button(icon('save')+'暂存草稿','save-draft'))}<div class="steps">${sections(p).map((s,i)=>`<button class="step-btn ${i===step?'active':''}" data-apply-step="${i}"><b>${i+1}</b>${i===last&&!brandReport(p)?'附件与提交':s}</button>`).join('')}</div>${step===0?`<div class="ocr-bar"><div><strong>报告书OCR辅助填报 · 演示识别</strong><p>默认内容已备齐；可上传文件或使用模拟文件体验“识别—核对—确认回填”，演示不调用真实识别服务。</p></div>${upload(icon('scan-text')+'上传并OCR识别','ocr-application')}</div>`:''}<section class="task-card"><div id="applyForm">${step===last?attachments(p,true):applicationForms(p)[step]}</div>${step===last?`<div class="alert gray"><div><strong>填写与附件完整性自动校验</strong><p>提交时统一列出缺失字段和附件，不设置重复的自检页面。</p></div></div><label class="check-line"><input type="checkbox" id="applicationDeclaration" ${window.V2_DEMO?'checked':''}>我确认本次填报及附件真实、准确、完整。</label>`:''}</section><div class="form-footer"><div class="actions">${step>0?button('上一步','apply-prev'):button('重新选择申创类别','new')}</div><div class="actions"><span class="form-progress" id="savedStatus">${draftStatus(p)}</span>${step<last?primary('下一步 '+icon('arrow-right'),'apply-next'):primary(p.correction?'提交补正材料':'确认提交','submit-application')}</div></div>`;}
+function scenicRangeAttachments(p,editable){const files=p.scenicRangeFiles||[];return `<section class="attach-group"><div class="attach-head"><div><strong>申报范围附件</strong><small>支持任意格式、多个文件；可上传范围图、坐标数据及其他说明材料。单文件不超过8MB。</small></div>${editable?upload('添加范围附件','scenicRangeFiles'):badge(files.length+' 个文件','gray')}</div>${files.length?fileRows(p,'scenicRangeFiles',files,editable):'<p class="file-empty">未上传范围附件</p>'}</section>`;}
+function hydrateForm(root,p,readonly){if(!root)return;hydrateBrandReport(root,p,readonly);const rangeHost=root.querySelector('[data-scenic-range-files]');if(rangeHost&&p.type==='scenic'){rangeHost.innerHTML=scenicRangeAttachments(p,!readonly);if(root.id==='previousForm')rangeHost.dataset.historyProject=p.id;}root.querySelectorAll('[data-field]').forEach(el=>{const key=el.dataset.field;if(el.type==='radio'||el.type==='checkbox')el.checked=!!p.values[key];else el.value=formValue(p,key)??(el.id==='scenicLevel'?'4A级旅游景区':'');if(readonly)el.disabled=true;});if(readonly)root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.attach-group'))el.disabled=true;});root.querySelectorAll('[data-field]').forEach(el=>{if(el.id){const label=root.querySelector(`label[for="${el.id}"]`);if(label?.textContent.includes('*'))el.dataset.required='true';}});window.V2_RESOURCES?.mount(root,p,readonly);window.V2_COORDINATES?.mount(root,p,readonly);}
+function captureField(el){
+  const project=getProject(),form=el.closest('#applyForm');
+  if(!form||el.disabled||!project||state.role!=='city'||!(project.stage==='draft'||project.correction))return;
+  const key=el.dataset.field;
+  if(['longitude','latitude'].includes(key)&&window.V2_COORDINATES)return window.V2_COORDINATES.capture(project,el);
+  const changed=Object.create(null);
+  const capture=(field,value)=>{if(project.values[field]!==value){project.values[field]=value;changed[field]=value;}};
+  if(el.type==='radio'&&el.dataset.group){
+    for(const radio of form.querySelectorAll('input[type="radio"][data-group]')){
+      if(radio.dataset.group===el.dataset.group)capture(radio.dataset.field,radio.checked);
+    }
+  }else capture(key,['radio','checkbox'].includes(el.type)?el.checked:el.value);
+  if(!Object.keys(changed).length)return;
+  updateDraftIdentity(project);
+  queueDraftSave(project,changed);
+}
+function upload(text,key,extra=''){return `<span class="demo-upload-group"><label class="upload-btn">${text}<input type="file" data-upload="${key}" multiple ${extra}></label>${window.V2_DEMO?`<button class="btn demo-upload" type="button" data-demo-upload="${key}">${key.startsWith('ocr')?'模拟上传并识别':'模拟上传'}</button>`:''}</span>`;}
+function attachments(p,editable){return (brandReport(p)?'<h2 class="brand-attachment-title">第四部分</h2>':'')+applicationAttachments(p).map(([title,,note],i)=>`<section class="attach-group"><div class="attach-head"><div><strong>${i+1}. ${esc(title)}</strong><small>${esc(note)}</small></div>${editable?brandReport(p)?`<div class="actions">${button('从文件管理选择','brand-pick-file',`data-file-key="attachment-${i}"`)}${upload('上传新文件','attachment-'+i)}</div>`:upload('添加文件','attachment-'+i):badge((p.files[i]||[]).length+' 个文件','gray')}</div>${(p.files[i]||[]).length?fileRows(p,'attachment-'+i,p.files[i],editable):'<p class="file-empty">未上传</p>'}</section>`).join('');}
+function fileRows(p,key,files,editable){return `<div class="files">${files.map((f,i)=>`<div class="file-row">${icon(/image|\.(png|jpg|jpeg)$/i.test(f.type||f.name)?'image':'file-text')}<span>${esc(f.name)}<small>${f.size?(f.size/1024).toFixed(0)+' KB':f.unavailable?'历史记录 · 未载入文件正文':f.demo?'模拟附件 · 可预览下载':'本地附件'}</small></span><div class="actions"><button class="text-btn" data-action="preview-file" data-file-key="${key}" data-index="${i}">预览</button><button class="text-btn" data-action="download-file" data-file-key="${key}" data-index="${i}">下载</button>${editable?`<button class="text-btn danger" data-action="delete-file" data-file-key="${key}" data-index="${i}">删除</button>`:''}</div></div>`).join('')}</div>`;}
+function filesFor(p,key){if(key.startsWith('resort-record|'))return resortRecordFiles(p,key);if(key.startsWith('attachment-'))return p.files[key.slice(11)]??=[];if(key.startsWith('history-'))return p.history.find(h=>h.id===key.slice(8))?.files||[];if([brandRangeKey,'scenicRangeFiles','creationPlan','committeeFiles','contextFiles'].includes(key))return p[key]??=[];const sh=sheetFor(p,p.stage);if(key.startsWith('evidence-'))return (sh.answers[key.slice(9)]??={}).evidence??=[];return (sh.uploads??={})[key]??=[];}
+function isApplicationFile(key){return key.startsWith('attachment-')||[brandRangeKey,'scenicRangeFiles'].includes(key);}
+function canEditApplicationFiles(p){return state.role==='city'&&p.region==='黔东南州'&&(p.stage==='draft'||!!p.correction);}
+async function uploadFiles(input){const p=getProject();const key=input.dataset.upload;const files=[...input.files||[]];if(!p||!files.length)return;
+  if(key.startsWith('ocr'))return window.V2_DEMO?window.V2_DEMO.startOcr(input):toast('OCR演示组件尚未加载，请刷新页面。');
+  const allowed=state.role==='city'&&(p.stage==='draft'||p.correction||key==='creationPlan'&&p.stage==='creation')||state.role==='hall'&&(key==='committeeFiles'&&p.stage==='committee'||key==='contextFiles')||state.role==='expert'&&['meeting','field'].includes(p.stage)&&canHandle(p)&&!sheetFor(p,p.stage).submitted;
+  if((isApplicationFile(key)?!canEditApplicationFiles(p):!allowed)||(Object.hasOwn(hotSpringSurveyFiles,key)&&!hotSpringCanReview(p,'field')))return toast('当前角色或环节不能上传该材料。');
+const target=filesFor(p,key);for(const file of files){if(file.size>8*1024*1024){toast(`${file.name}超过本地演示8MB限额，请使用较小文件。`);continue;}const data=await new Promise(res=>{const reader=new FileReader();reader.onload=()=>res(reader.result);reader.onerror=()=>res(null);reader.readAsDataURL(file);});if(!data){toast('无法读取'+file.name+'，请重新选择可访问的本地文件。');continue;}let text='';if(/text|json/.test(file.type)||/\.(txt|csv|md)$/i.test(file.name))text=await file.text();target.push({name:file.name,type:file.type,size:file.size,data,text,demo:!!input.demo,at:new Date().toISOString()});}save();
+  if(key.startsWith('evidence'))evidenceModal(key.slice(9));else if(!isLegacyScenic(p)&&['scoreSheet','photos','report'].includes(key))fieldUploadsModal();else if(key==='contextFiles')hallContext();else{const scroll=window.scrollY;render();window.scrollTo(0,scroll);}toast('附件已保存，可预览、下载或删除。');
+}
+function fileAction(action,key,index){const p=getProject(),files=filesFor(p,key),f=files[index];if(!f)return;
+  if(action==='delete-file'){if(key.startsWith('resort-record|')||Object.hasOwn(hotSpringSurveyFiles,key)&&!hotSpringCanReview(p,'field'))return;const allow=state.role==='city'&&(p.stage==='draft'||p.correction||key==='creationPlan'&&p.stage==='creation')||state.role==='hall'&&(key==='committeeFiles'&&p.stage==='committee'||key==='contextFiles')||state.role==='expert'&&['meeting','field'].includes(p.stage)&&canHandle(p)&&!sheetFor(p,p.stage).submitted;if(isApplicationFile(key)?!canEditApplicationFiles(p):!allow)return toast('当前记录不可编辑');files.splice(index,1);save();if(key.startsWith('evidence'))evidenceModal(key.slice(9));else if(!isLegacyScenic(p)&&['scoreSheet','photos','report'].includes(key))fieldUploadsModal();else if(key==='contextFiles')hallContext();else{render();}return;}
+  if(!f.data){openModal('文件正文未载入','历史附件',`<p>${esc(f.name)}</p><div class="alert gray"><p>当前演示只保留附件登记。实际文件正文未载入，因此不生成虚构内容或空文件下载。</p></div>`,'',null,false,true);return;}
+  if(action==='download-file'){const a=document.createElement('a');a.href=f.data;a.download=f.name;a.click();return;}
+  const content=f.type?.startsWith('image/')?`<img class="preview-image" src="${f.data}" alt="${esc(f.name)}">`:f.type==='application/pdf'?`<iframe src="${f.data}" title="${esc(f.name)}"></iframe>`:f.text?`<pre style="white-space:pre-wrap">${esc(f.text)}</pre>`:`<div class="alert gray"><p>该文件格式不支持直接预览，请下载后使用对应软件打开。</p></div>${button('下载附件','download-file',`data-file-key="${key}" data-index="${index}"`)}`;
+  openModal(f.name,'附件预览',content,'',null,true,true);
+}
+function expertLibrary(){return pageHead('专家库','维护专业领域、资格有效期与专家登录账号。',primary(icon('user-plus')+'添加专家','add-expert'))+`<section class="panel"><div class="filters"><label class="search">${icon('search')}<input id="expertQuery" placeholder="搜索姓名、专业领域或机构"></label>${button(icon('download')+'下载导入模板','expert-template')}${upload('导入专家CSV','import-experts','accept=".csv"')}</div><div class="table-wrap"><table id="expertTable"><thead><tr><th>专家</th><th>专业领域</th><th>资格有效期</th><th>状态</th><th>操作</th></tr></thead><tbody>${db.experts.map(e=>`<tr><td><strong>${e.name}</strong><small>${e.org}</small></td><td>${e.domains.join('、')}</td><td>${e.expiry}</td><td>${badge(e.expiry>=today()?'有效':'已过期',e.expiry>=today()?'green':'red')}</td><td>${button('维护档案','edit-expert',`data-expert="${e.id}"`)}</td></tr>`).join('')}</tbody></table></div></section>`;}
+function annualPeriodsList(config){return `<div class="annual-periods-list">${D.categories.map(category=>{const period=config.categoryPeriods?.[category.id];return `<div><strong>${esc(category.name)}</strong><span>${period?.start&&period.end?`${esc(period.start)} 至 ${esc(period.end)}`:'时间待公布'}</span></div>`;}).join('')}</div>`;}
+function settings(){
+  const year=new Date().getFullYear(),rows=Object.values(db.annualSettings).sort((a,b)=>b.year-a.year).flatMap(config=>D.categories.filter(category=>configuredPeriod(config.year,category.id)).map(category=>({config,category,period:config.categoryPeriods[category.id]})));
+  const operation=(targetYear,type)=>`data-year="${targetYear}" data-settings-category="${type}"`;
+  return pageHead('年度申报设置','按年度和申创类别逐项配置；每次只编辑一个类别，不影响其他类别的报名时间。',primary('新增类别时间','add-settings'))+`<section class="task-card"><div class="task-heading"><div><h2>${year}年度各类别报名时间</h2><p>开始日与截止日当天均可报名；点击对应类别的配置或编辑。未开发类别配置时间也不会开放。</p></div></div><div class="table-wrap"><table class="annual-periods-table"><thead><tr><th>申创类别</th><th>开始报名时间</th><th>结束报名时间</th><th>当前状态</th><th>操作</th></tr></thead><tbody>${D.categories.map(category=>{const opening=applicationOpening(category.id,year),period=opening.period,configured=configuredPeriod(year,category.id);return `<tr><td><strong>${esc(category.name)}</strong></td><td>${esc(period?.start||'未配置')}</td><td>${esc(period?.end||'未配置')}</td><td>${badge(opening.label,opening.open?'green':opening.status==='upcoming'?'amber':'gray')}</td><td>${button(configured?'编辑':'配置',configured?'edit-settings':'add-settings',operation(year,category.id))}</td></tr>`;}).join('')}</tbody></table></div><p class="helper">默认补正时限沿用年度设置（${annualConfig(year)?.correctionDays||10}天），单项目补正时仍可调整；本次只配置所选类别的报名时间。</p><p class="helper">市州新建及首次提交按对应年度和类别校验时间；获准补正按项目补正期限办理，往年创建与现场评审不受报名截止影响。</p></section><section class="panel annual-records"><div class="panel-head"><div><h2>已保存的类别时间</h2><p>按年度倒序，每个类别独立一行；编辑和修改记录均仅针对该类别。</p></div></div>${rows.length?`<div class="table-wrap"><table><thead><tr><th>申报年度</th><th>申创类别</th><th>开始报名时间</th><th>结束报名时间</th><th>最近保存</th><th>操作</th></tr></thead><tbody>${rows.map(({config,category,period})=>`<tr><td><strong>${config.year}年度</strong>${Number(config.year)===year?badge('本年度'):''}</td><td>${esc(category.name)}</td><td>${esc(period.start)}</td><td>${esc(period.end)}</td><td>${esc(period.updatedAt||config.updatedAt||'原配置，时间未记录')}<small>${esc(period.updatedBy||config.updatedBy||'')}</small></td><td><div class="actions">${button('编辑','edit-settings',operation(config.year,category.id))}${button('修改记录','settings-history',operation(config.year,category.id))}</div></td></tr>`).join('')}</tbody></table></div>`:empty('尚未配置类别报名时间，请点击新增类别时间。')}</section>`;
+}
+function settingsPeriodFields(year,type,period={}){const category=cat(type);return `<section class="registration-setting-row"><div><h3>${esc(category.name)}</h3>${!category.enabled?badge('开发中 · 配置不会开放申报','gray'):''}</div><div class="form-grid"><label class="field"><span>开始报名时间 *</span><input type="date" name="configStart-${type}" aria-label="${esc(category.name)}开始报名时间" value="${esc(period.start||'')}" min="${year}-01-01" max="${year}-12-31"></label><label class="field"><span>结束报名时间 *</span><input type="date" name="configEnd-${type}" aria-label="${esc(category.name)}结束报名时间" value="${esc(period.end||'')}" min="${year}-01-01" max="${year}-12-31"></label></div></section>`;}
+function settingsModal(year,type){
+  if(state.role!=='admin')return;
+  const currentYear=new Date().getFullYear(),targetYear=year||currentYear,category=cat(type)||D.categories.find(item=>!configuredPeriod(targetYear,item.id))||D.categories[0],editing=!!year&&configuredPeriod(targetYear,category.id);
+  state.settingsYear=year||null;state.settingsCategory=type||null;state.settingsEditing=editing;
+  openModal(editing?'编辑类别报名时间':'新增类别报名时间','年度申报设置 · 每次仅配置一个申创类别',`<div class="form-grid">${field('configYear','申报年度 *','number',targetYear)}<label class="field"><span>申创类别 *</span><select name="configCategory" ${type?'disabled':''}>${D.categories.map(item=>`<option value="${item.id}" ${item.id===category.id?'selected':''}>${esc(item.name)}${!item.enabled?' · 开发中':''}</option>`).join('')}</select></label></div><div class="registration-settings">${settingsPeriodFields(targetYear,category.id,editing?annualConfig(targetYear).categoryPeriods[category.id]:{})}</div><p class="helper">开始与结束日期均为必填，须属于所选年度，结束不能早于开始，可同日。保存仅影响当前类别；同一年度可分别新增其他未配置类别，已配置的类别请从行内编辑。</p>`,button('取消','close-modal')+primary('保存该类别时间','save-settings'));
+  if(year)document.querySelector('[name="configYear"]').disabled=true;
+}
+function settingsHistory(year,type=D.categories[0].id){
+  const config=annualConfig(year),category=cat(type);if(state.role!=='admin'||!config||!category)return;
+  const period=config.categoryPeriods?.[type]||{},changes=(config.revisions||[]).map((revision,index)=>{const before=revision.categoryPeriods?.[type]||{start:`${year}-01-01`,end:revision.deadline},after=(config.revisions[index+1]||config).categoryPeriods?.[type]||{};return {revision,before,after};}).filter(({before,after})=>before.start!==after.start||before.end!==after.end).reverse();
+  openModal(`${year}年度 · ${category.name}修改记录`,'年度申报设置 · 仅展示当前类别',`<div class="alert gray"><div><strong>当前生效配置</strong><p>${esc(category.name)}</p><p>${esc(period.start||'未配置')} 至 ${esc(period.end||'未配置')}</p><p>${esc(period.updatedAt||config.updatedAt||'原配置，保存时间未记录')} ${esc(period.updatedBy||config.updatedBy||'')}</p></div></div>${changes.length?changes.map(({revision,before,after})=>`<div class="history-item"><h3>修改前的报名时间</h3><p>${before.start&&before.end?`${esc(before.start)} 至 ${esc(before.end)}`:'尚未配置'}</p><p>修改后：${esc(after.start||'未配置')} 至 ${esc(after.end||'未配置')}</p><p class="helper">由${esc(revision.replacedBy)}于${esc(revision.replacedAt)}修改</p></div>`).join(''):empty('该类别暂无修改记录；首次配置可在当前生效配置中查看。')}`);
+}
+function publicityList(){if(state.role!=='hall')return empty('仅省厅审核人员可配置批量公示。');const rows=db.projects.filter(p=>p.stage==='publicity'&&(state.category==='all'||p.type===state.category));return pageHead('待公示项目','只办理最终评定结果公示。完成上会后进入本菜单，按申创类别选择一批项目。','','公示管理 / PUBLICITY')+categoryChips()+`<section class="panel"><div class="table-wrap"><table><thead><tr><th>选择</th><th>项目名称</th><th>申创类别</th><th>公示状态</th><th>公示期</th><th>操作</th></tr></thead><tbody>${rows.map(p=>`<tr><td><input type="checkbox" data-publicity-select="${p.id}" ${state.selected.has(p.id)?'checked':''} ${p.publicity?'disabled':''}></td><td><strong>${p.name}</strong><small>${p.id}</small></td><td>${cat(p.type).name}</td><td>${badge(stageLabel(p),p.publicity?'green':'amber')}</td><td>${p.publicity?`${p.publicity.start} 至 ${p.publicity.end}`:'尚未配置'}</td><td>${p.publicity?button('查看公示 / 异议','publicity-batch',`data-project="${p.id}"`):button('查看项目','open-p',`data-project="${p.id}"`)}</td></tr>`).join('')}</tbody></table></div>${!rows.length?empty('本类别暂无待公示项目。'):''}<div class="publicity-actions"><span class="muted" id="selectedCount">已选择 ${state.selected.size} 个项目</span>${primary('批量配置公示 '+icon('arrow-right'),'configure-publicity')}</div></section>`;}
+function openModal(title,subtitle,body,footer='',submit=null,wide=false,stack=false){if(stack&& !document.getElementById('overlay').hidden)modalStack.push({title:document.getElementById('modalTitle').textContent,subtitle:document.getElementById('modalSubtitle').textContent,body:document.getElementById('modalBody').innerHTML,fields:[...document.querySelectorAll('#modalBody input,#modalBody textarea,#modalBody select')].map(el=>({value:el.type==='file'?'':el.value,checked:el.checked})),footer:document.getElementById('modalFooter').innerHTML,submit:modalSubmit,wide:document.querySelector('.modal').classList.contains('wide')});else if(!stack)modalStack=[];
+  if(document.getElementById('overlay').hidden)priorFocus=document.activeElement;
+  document.getElementById('modalTitle').textContent=title;document.getElementById('modalSubtitle').textContent=subtitle;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalFooter').innerHTML=footer||button('关闭','close-modal');document.querySelector('.modal').classList.toggle('wide',wide);document.getElementById('overlay').hidden=false;modalSubmit=submit;document.body.style.overflow='hidden';window.V2_DEMO?.prepare(document.getElementById('modalBody'));applyPhaseScope();icons();document.querySelector('[data-action="close-modal"]').focus();}
+function closeModal(){if(modalStack.length){const m=modalStack.pop(),remaining=modalStack;openModal(m.title,m.subtitle,m.body,m.footer,m.submit,m.wide);modalStack=remaining;const root=document.querySelector('#modalBody #submittedForm');if(root)hydrateForm(root,getProject(),true);document.querySelectorAll('#modalBody input,#modalBody textarea,#modalBody select').forEach((el,i)=>{const field=m.fields?.[i];if(!field)return;if(el.type!=='file')el.value=field.value;if(['radio','checkbox'].includes(el.type))el.checked=field.checked;});document.querySelectorAll('#modalBody [data-question] textarea').forEach(el=>el.disabled=true);return;}document.getElementById('overlay').hidden=true;modalSubmit=null;document.body.style.overflow='';priorFocus?.focus();}
+function confirm(title,body,submit){openModal(title,'提交确认',body,button('取消','close-modal')+primary('确认提交','modal-submit'),submit);}
+function toast(text){const n=document.createElement('div');n.className='toast';n.textContent=text;document.getElementById('toasts').append(n);setTimeout(()=>n.remove(),4500);}
+function read(name){return document.querySelector(`[name="${name}"]`)?.value.trim()||'';}
+function decision(name){return document.querySelector(`[name="${name}"]:checked`)?.value;}
+function materialsModal(){const p=getProject();if(!p||!visibleProjects().some(project=>project.id===p.id))return;if(p.stage==='draft'&&!['city','hall'].includes(state.role))return toast('当前角色无权查看未提交的填报内容。');state.modalSection??=0;const prev=state.formSection;state.formSection=state.modalSection;const shown=!document.getElementById('overlay').hidden,same=shown&&document.getElementById('modalTitle').textContent==='申报方提交材料',savedStack=modalStack;openModal('申报方提交材料',`${p.name} · ${p.stage==='draft'?'暂存草稿 · 尚未提交':'正式 V'+p.version} · 只读`,`${button(icon('search')+'AI全文检索','search-materials')}<div style="height:16px"></div>${submitted(p)}`,'',null,true,shown&&!same);if(same)modalStack=savedStack;state.formSection=prev;hydrateForm(document.querySelector('#modalBody #submittedForm'),p,true);document.querySelectorAll('#modalBody [data-form-section]').forEach(b=>{b.dataset.modalSection=b.dataset.formSection;delete b.dataset.formSection;});}
+function previousModal(){previousApplicationsModal();}
+function searchModal(query=''){openModal('AI全文检索','检索本项目已填报内容与已载入文本',`<label class="search">${icon('search')}<input id="materialQuery" placeholder="输入关键词，如交通、管理机构、资源" value="${esc(query)}"></label><p class="helper">只引用实际已填写原文；PDF、Word和图片正文解析待接入。不依据缺失内容生成分数。</p><div id="searchResults">${query?searchResults(query):empty('输入关键词后点击检索')}</div>`,button('返回','close-modal')+primary('检索','run-search'),null,true,true);}
+function searchResults(query){const p=getProject();if(!p||!query.trim())return empty(p?'请输入检索关键词。':'请先选择一个项目，再检索申报内容。');const terms=query.match(/[\u4e00-\u9fa5]{2,}/g)||[query],hits=[];for(const [key,value] of Object.entries(p.values)){if(typeof value!=='string'||!value)continue;const labels=formLabel(p,key);if(terms.some(t=>(labels+value).includes(t)||t.length>4&&(labels+value).includes(t.slice(0,2))))hits.push({source:'填报内容 · '+labels,text:value});}Object.values(p.files).flat().forEach(f=>{if(f.text&&terms.some(t=>f.text.includes(t)))hits.push({source:'附件 · '+f.name,text:f.text.slice(0,1400)});});return hits.length?`<div class="alert green"><p>找到 ${hits.length} 处相关原文。请结合评分规则人工判定，不自动写入评分。</p></div>${hits.map(h=>`<div class="evidence-hit"><small>${esc(h.source)}</small><p>${esc(h.text)}</p></div>`).join('')}`:`<div class="alert gray"><p>没有找到可引用的原文。建议先查看申报材料或补充文本。当前不生成评分建议。</p></div>`;}
+function formLabel(p,key){const div=document.createElement('div');div.innerHTML=applicationForms(p).join('');const input=div.querySelector(`[data-field="${key}"]`);if(!input)return key;return div.querySelector(`label[for="${key}"]`)?.textContent||input.closest('.field')?.querySelector('label')?.textContent||key;}
+function assignmentModal(){const p=getProject();if(state.role!=='hall'||['draft','done','failed','initial'].includes(p.stage))return toast('当前环节不能指派专家。');const stage=state.assignment?.stage||(['document','meeting','field'].includes(p.stage)?p.stage:p.stage==='hall'?'meeting':'field');const selected=state.assignment?.selected||new Set(p.assigned[stage]?.length?p.assigned[stage]:stage==='field'?p.assigned.meeting||p.assigned.document||[]:[]);state.assignment={stage,selected};
+openModal('指派评审专家',p.name,`<div class="assignment-tools"><label>评审环节 <select id="assignmentStage" aria-label="指派评审环节">${['document',...(p.type==='scenic'?['meeting']:[]),'field'].filter(k=>stagePath(p).indexOf(k)<=stagePath(p).indexOf(p.stage)||k==='field'&&p.stage==='creation').map(k=>`<option value="${k}" ${k===stage?'selected':''}>${STAGES[k][0]}</option>`).join('')}</select></label><label>人数 <input type="number" id="assignmentCount" min="1" max="20" value="${stage==='document'?Math.max(selected.size,3):7}" aria-label="专家人数"></label><select id="domainFilter" aria-label="专业领域筛选"><option value="all">全部专业领域</option>${[...new Set(db.experts.flatMap(e=>e.domains))].map(t=>`<option>${t}</option>`).join('')}</select></div><div class="actions" style="margin-bottom:15px">${button(icon('shuffle')+'随机抽取','random-experts')}${button(icon('user-plus')+'添加专家并开通账号','add-expert')}</div><div id="assignmentCandidates">${db.experts.map(e=>`<label class="expert-candidate ${e.expiry<today()?'unavailable':''}" data-domain="${esc(e.domains.join(','))}"><input type="checkbox" data-select-expert="${e.id}" ${selected.has(e.id)?'checked':''} ${e.expiry<today()?'disabled':''}><div><strong>${e.name} · ${e.title}</strong><small>${e.org}</small><small>${e.domains.join('、')} · 资格有效至 ${e.expiry}</small></div>${badge(e.expiry<today()?'资格过期':'有效',e.expiry<today()?'red':'green')}</label>`).join('')}</div><div class="alert gray"><p>当前环节可改派办理专家；已完成环节仅调整历史查看人员，不重新打开评分或覆盖原始记录。新专家可查看材料和全部历史过程。现场专家默认沿用第一次参评专家，可改选。过期专家需先维护资格。</p></div>`,button('取消','close-modal')+primary('确认指派','confirm-assignment'),null,true);
+}
+function addExpertModal(id){const e=db.experts.find(x=>x.id===id);state.editExpert=id||null;const inAssign=!!state.assignment;openModal(e?'维护专家档案':'添加专家并开通账号','专家库',`<div class="form-grid">${field('expertName','姓名 *','text',e?.name||'')}${field('expertTitle','职称 *','text',e?.title||'')}${field('expertOrg','单位 *','text',e?.org||'')}${field('expertDomains','专业领域 *（逗号分隔）','text',e?.domains.join('、')||'')}${field('expertExpiry','资格有效期 *','date',e?.expiry||'')}${field('expertAccount','登录账号 *','text',e?.account||e?.id||'')}</div><p class="helper">保存后同步建立专家档案与演示账号，可立即在指派弹窗中选择。正式账号认证服务待接入。</p>`,button('取消','cancel-add-expert')+primary('保存'+(e?'':'并开通账号'),'save-expert'),null,false,inAssign);}
+function scoreRecordModal(stage,id){const p=getProject();if(state.role==='city')return toast('专家原始评分不对申报方公开');const sh=p.sheets[stage]?.[id];if(!sh?.submitted)return toast('该专家尚未提交评分');if(isLegacyScenic(p))return openLegacyFieldReview(p,sh,id);if(isHotSpring(p))return openHotSpringRecord(p,sh,id);if(isLeisureBlock(p))return openLeisureFieldRecord(p,sh,id);if(sh.summerScoringStatus==='not-started')return openSummerUnscoredRecord(p,sh,id);if(p.type==='resort'&&sh.resortRuleVersion)return openResortFieldRecord(p,sh,id);if(resortLegacySheet(p,sh)){openModal('现场评审核验记录',p.name,`<div class="alert gray"><p>${esc(expertName(id))} · 已提交 · 历史记录不可编辑</p></div><h3>核验结论</h3><p>${sh.result==='fail'?'不符合认定要求':'符合认定要求'}</p><p class="remark-text">${esc(sh.comment)}</p><small>${esc(sh.at)}</small><h3>现场附件</h3>${Object.entries(sh.uploads||{}).map(([key,files])=>`<p>${esc(({scoreSheet:'评定表',photos:'现场照片',report:'现场验收报告'})[key]||key)}：${files.map(file=>esc(file.name)).join('、')||'无'}</p>`).join('')||'<p>无附件登记</p>'}${sh.signature?.data?`<h3>专家签字</h3><img class="signature-preview" src="${sh.signature.data}" alt="专家签字">`:''}`,'',null,true,true);return;}const original=p.stage;p.stage=stage;const qs=scoreQuestions(p,stage).flatMap(m=>m.questions),required=requiredFor(p,stage);const prerequisites=Object.entries(sh.required||{}).map(([index,value])=>`<p>${Number(index)+1}. ${esc(required[index]||'原条件记录')}：${value==='pass'?'达标':'不达标'}</p>`).join('');const html=`<div class="alert green"><div><strong>${expertName(id)} · ${sh.total}分 · 已提交</strong><p>${sh.at} · ${esc(sh.comment)} · 历史记录不可编辑</p></div></div>${prerequisites?`<details class="history-item"><summary>前提条件核验记录</summary>${prerequisites}</details>`:''}${sh.majorResults?.length?`<p>${sh.majorResults.map(m=>`${m.name}：${m.score} / ${m.max}`).join('；')}</p>`:''}${qs.map(q=>question(p,q,sh,true)).join('')}${sh.signature?.data?`<h3>专家签字</h3><img class="signature-preview" src="${sh.signature.data}" alt="专家签字">`:'<p class="helper">签字已随历史评分归档。</p>'}`;p.stage=original;openModal(STAGES[stage][0]+'评分记录',p.name,html,'',null,true,true);document.querySelectorAll('#modalBody textarea').forEach(el=>el.disabled=true);}
+function hallContext(){const p=getProject();openModal('复审参考资料',p.name,`<h3>舆情、安全事件与部门意见</h3><p class="helper">尚未接入社会舆情查询接口。可上传厅方已收集的资料作为综合判定依据，不自动生成舆情结论。</p>${upload('上传参考资料','contextFiles')}${fileRows(p,'contextFiles',p.contextFiles||[],true)}${field('contextNote','厅方核验说明','textarea',p.contextNote||'')}`,button('关闭','close-modal')+primary('保存说明','save-context'));}
+function fieldUploadsModal(){const p=getProject(),sh=sheetFor(p,p.stage);openModal('现场附件与问题汇总',p.name,`<h3>${isLeisureBlock(p)?'现场核验表':'打分表'}</h3>${upload(isLeisureBlock(p)?'上传现场核验表':'上传打分表','scoreSheet')}${fileRows(p,'scoreSheet',sh.uploads?.scoreSheet||[],true)}<h3 style="margin-top:20px">现场照片（未关联单项）</h3>${upload('上传数张现场照片','photos','accept="image/*"')}${fileRows(p,'photos',sh.uploads?.photos||[],true)}${(sh.uploads?.photos||[]).map((f,i)=>field('photo-desc-'+i,f.name+' · 图片简述（非必填）','text',f.description||'')).join('')}<h3 style="margin-top:20px">现场验收报告</h3>${upload('上传现场验收报告','report')}${fileRows(p,'report',sh.uploads?.report||[],true)}<h3 style="margin-top:25px">逐项问题汇总</h3>${Object.entries(sh.answers).filter(([,a])=>a.note||a.evidence?.length).map(([id,a])=>`<div class="history-item"><strong>${scoreQuestions(p,p.stage).flatMap(m=>m.questions).find(q=>q.id===id)?.title||id}</strong><p>${esc(a.note||'已关联现场证据')}</p><small class="muted">整改要求：${esc(a.rectification||'未填写')} · ${a.evidence?.length||0}张证据</small></div>`).join('')||empty('暂无单项问题。可从评分项“现场证据”上传关联图片。')}`,'',null,true);}
+function evidenceModal(id){const p=getProject();openModal(isLeisureBlock(p)?'条款现场证据':'评分项现场证据',scoreQuestions(p,p.stage).flatMap(m=>m.questions).find(q=>q.id===id)?.title||id,`${upload('添加图片或现场证明','evidence-'+id)}${fileRows(p,'evidence-'+id,filesFor(p,'evidence-'+id),true)}<p class="helper">文件与当前评分项绑定，并进入本阶段问题汇总。</p>`,'',null,true);}
+function finishScore(){const p=getProject(),sh=sheetFor(p,p.stage);if(sh.submitted)return toast('评分已经提交，不可修改。');if(!canHandle(p))return toast('当前无评分权限。');sh.comment=read('scoreComment');save();
+  if(p.type==='resort')return finishResortScore(p,sh);
+  if(isHotSpring(p)){if(prepareHotSpringScore(p,sh)){save();signatureDialog(p,sh);}return;}
+  if(isLeisureBlock(p)){if(finishLeisureField(p,sh))signatureDialog(p,sh);return;}
+  if(p.type==='summer-resort'&&!validateSummerPrerequisites(p,sh))return;
+  if(p.type==='summer-resort'&&!summerCanScore(p,sh)){sh.summerScoringStatus='not-started';sh.total=null;sh.majorResults=[];sh.result='fail';save();signatureDialog(p,sh);return;}
+  const failed=Object.values(sh.required).includes('fail');if(!failed){const qs=scoreQuestions(p,p.stage).flatMap(m=>m.questions);for(const q of qs){const answer=sh.answers[q.id];if(answer?.invalidScore)return scoreValidationError(p,q,'请重新核对本项实际评分：'+q.title,`[data-exact-score="${q.id}"]`);if(answer?.score===undefined||!Number.isFinite(answer.score)||answer.score<0||answer.score>q.max)return scoreValidationError(p,q,'请完成或检查本项评分：'+q.title);if(p.stage==='meeting'&&q.integrity&&answer.integrity===undefined)return scoreValidationError(p,q,'请确认资源完整性评分项的空间完整情况。','[data-integrity]');if(answer.score<q.max&&!answer.note?.trim())return scoreValidationError(p,q,'请填写扣分依据：'+q.title,fieldSelector('deduction-'+q.id));}}
+  if(!sh.comment)return validationError('请填写本阶段综合意见。',fieldSelector('scoreComment'));
+  const required=requiredFor(p,p.stage);required.forEach((_,i)=>sh.required[i]??='pass');
+  const total=scoreTotal(sh),threshold=p.stage==='meeting'?80:p.type==='scenic'?850:450;
+  sh.majorResults=p.type==='summer-resort'?window.SUMMER_EVALUATION_RULES.majors.map(m=>({name:m.name,max:m.max,score:Math.min(m.max,m.sections.flatMap(s=>s.groups).reduce((n,g)=>n+(Number(sh.answers[g.key]?.score)||0),0))})):[];
+  const allMajorsPass=sh.majorResults.every(m=>m.score>=m.max*.6);
+  if(p.type==='summer-resort')sh.summerScoringStatus='scored';
+  sh.result=failed||total<threshold||!allMajorsPass?'fail':'pass';
+  signatureDialog(p,sh);
+}
+function configurePublicity(){let ids=[...state.selected].filter(id=>getProject(id)?.stage==='publicity'&&!getProject(id).publicity);if(!ids.length)return toast('请先勾选等待公示的项目。');if(new Set(ids.map(id=>getProject(id).type)).size>1)return toast('请按同一申创类别选择一批项目。');state.batchIds=ids;openModal('批量公示配置',`本批 ${ids.length} 个项目`,`${ids.map(id=>`<p>• ${esc(publicityProjectName(getProject(id)))}</p>`).join('')}<div class="form-grid" style="margin-top:20px">${field('publicityStart','公示开始日期 *','date',today())}${field('publicityEnd','公示结束日期（7个工作日）','date',workingEnd(today()))}${field('publicityChannel','公示发布位置 *','text','贵州省文化和旅游厅官方网站')}${field('publicityContact','指定实名异议渠道 *','text','','按正式公示通知填写')}</div><div class="alert gray"><p>本地按周一至周五计算7个工作日，正式上线需接入法定节假日日历。可按实际工作日校正结束日期。</p></div><div id="templatePreview"></div>`,button('生成并导出公示模板','export-publicity')+primary('确认发布公示','submit-publicity'),null,true);}
+function publicityBatchModal(id){if(state.role!=='hall')return;state.project=id;const p=getProject(),b=p?.publicity;if(!b)return;const rows=db.projects.filter(x=>x.publicity?.batch===b.batch&&x.stage==='publicity'&&!x.publicity.completed&&today()>=x.publicity.start&&today()<=x.publicity.end);if(!rows.length)return;openModal('登记异议',`批次 ${b.batch}`,`<div class="metric-list"><div>公示期<strong>${b.start} 至 ${b.end}</strong></div><div>公示渠道<strong>${esc(b.channel)}</strong></div></div><div class="alert gray"><p>公示期内登记异议时须选择对应项目。期满后在公示管理批量选择通过或不通过并归档，异议原文保留。</p></div><label class="field"><span>异议对应项目 *</span><select name="objectionProject">${rows.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>${field('objectionContent','实名异议内容及依据 *','textarea','','记录指定渠道接收的实名异议及其关联标准，不在系统自动判定是否成立')}<h3>本批项目异议记录</h3>${rows.map(x=>`<h4>${esc(x.name)} · ${x.publicity.objections?.length||0}条</h4>${objectionRecords(x)}`).join('')}`,button('关闭','close-modal')+(p.stage==='publicity'&&!b.completed&&today()>=b.start&&today()<=b.end?primary('登记异议','save-objection'):''),null,true);}
+function extensionModal(){const p=getProject();openModal('申请创建期延期',p.name,`${field('extensionDate','申请延长至 *','date',addMonths(p.creationEnd,3))}${field('extensionReason','延期原因 *')}`,button('取消','close-modal')+primary('提交延期申请','submit-extension'));}
+function assistant(){state.assistantOpen=!state.assistantOpen;renderAssistant();}
+function renderAssistant(){const el=document.getElementById('assistant');el.hidden=!state.assistantOpen;if(!state.assistantOpen)return;el.innerHTML=`<header><strong>项目智能助手</strong><button class="icon-btn" data-action="assistant" aria-label="关闭助手">${icon('x')}</button></header><div class="categories">${[['review','审核助手'],['resource','资源查询'],['policy','政策查询']].map(([k,n])=>`<button class="chip ${state.assistantTab===k?'active':''}" data-assistant-tab="${k}">${n}</button>`).join('')}</div><div class="body"><p class="helper">${state.assistantTab==='review'?'检索当前项目内容，辅助查找材料与缺项。':state.assistantTab==='resource'?'放入红线范围图，关联资源目录与评分点。':'查看当前类别使用的标准来源。'}</p>${state.assistantTab==='resource'?`<div class="alert gray"><p>红线资源空间匹配与同类均分接口待接入，当前不生成未经确认的资源及客观分。</p></div>`:state.assistantTab==='policy'?`<div class="answer">${getProject()?.type==='scenic'?'《旅游景区质量等级划分》GB/T 17775—2024\n《旅游景区质量等级评分细则（2025年11月）》\n4A旅游资源价值分值要求80分；设施与服务质量分值要求850分。':getProject()?.type==='summer-resort'?'《避暑旅游度假区评价细则》\nDB52/T 1790—2024\n10项必备条件；综合评价450分；各基本大项不低于60%。':'旅游度假区申报报告书与配套认定标准。请以申创年度正式通知为准。'}</div>`:`<textarea id="assistantQuery" placeholder="输入材料关键词"></textarea>${primary('检索项目内容','assistant-search')}<div id="assistantResults"></div>`}</div>`;icons();}
+function downloadText(name,text,type='text/plain;charset=utf-8'){const a=document.createElement('a');const url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function navigate(route){flushDraftEdits();if(location.hash.slice(1)===route)routeChanged();else location.hash=route;}
+function routeChanged(){const [view,id,step]=location.hash.slice(1).split('/');state.view=['home','projects','archive','publicity','experts','settings','rules','new','apply','project'].includes(view)?view:'home';if(state.view==='experts'&&state.role!=='hall'||['settings','rules'].includes(state.view)&&state.role!=='admin')state.view='home';if(id)state.project=id;const project=getProject();if(state.view==='project'&&state.role==='city'&&project?.region==='黔东南州'&&project.stage==='draft'){resumeApplication(project);return;}if(state.view==='apply')state.formStep=clampFormSection(project,step??0);window.scrollTo(0,0);render();}
+document.getElementById('role').addEventListener('change',e=>{state.role=e.target.value;state.selected.clear();state.assignment=null;state.initialAssignment=false;state.signatureSession=null;state.listYear=null;state.includePublicity=false;state.filter='all';state.query='';state.category='all';closeModal();navigate('home');});
+window.addEventListener('hashchange',()=>{flushDraftEdits();routeChanged();});
+window.addEventListener('pagehide',flushDraftEdits);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDraftEdits();});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button,a');if(!b||b.disabled)return;
+  if(b.dataset.flowStage){if(!['hall','city','expert'].includes(state.role)||state.view!=='home')return;const stage=b.dataset.flowStage,category=b.dataset.flowCategory;if(!cat(category)?.enabled||!stagePath({type:category}).includes(stage))return;state.assignment=null;state.selected.clear();state.listYear=state.year;state.category=category;state.filter=stage;state.query='';state.includePublicity=stage==='publicity';navigate(stage==='done'?'archive':'projects');return;}
+  if(b.dataset.nav){state.assignment=null;state.category='all';state.filter='all';state.query='';state.listYear=null;state.includePublicity=false;navigate(b.dataset.nav);return;}
+  if(b.dataset.openProject){openProject(b.dataset.openProject);return;}
+  if(b.dataset.category){state.category=b.dataset.category;state.selected.clear();render();return;}
+  if(b.dataset.tab){state.tab=b.dataset.tab;render();return;}
+  if(b.dataset.newType){createApplication(b.dataset.newType);return;}
+  if(b.dataset.applyStep){state.formStep=Number(b.dataset.applyStep);navigate('apply/'+state.project+'/'+state.formStep);return;}
+  if(b.dataset.modalSection){state.modalSection=Number(b.dataset.modalSection);materialsModal();return;}
+  if(b.dataset.formSection){setSubmittedSection(Number(b.dataset.formSection));return;}
+  if(b.dataset.scoreSection){setScoreSection(b.dataset.scoreSection);return;}
+  if(b.dataset.scoreMajor){if(b.dataset.scoreMajor==='innovation'){const project=getProject();if(project?.type==='summer-resort'&&project.stage==='field'&&state.role==='expert'&&canHandle(project)&&summerCanScore(project,sheetFor(project,'field')))innovationModal();return;}state.scoreMajor=b.dataset.scoreMajor;render();document.querySelector('.score-dock').scrollIntoView({block:'start'});return;}
+  if(b.dataset.assistantTab){toast('智能助手本期不开发');return;}
+  const action=b.dataset.action;if(!action)return;const p=getProject();
+  if(DEFERRED_ACTIONS.has(action)){toast('本期不开发，请人工查看材料并办理。');return;}
+  if(action.startsWith('nav-')){navigate(action.slice(4));return;}
+  if(action==='new'){if(state.role==='city')navigate('new');return;}
+  if(action==='back-list'){navigate(state.origin==='archive'?'archive':state.origin==='publicity'?'publicity':'projects');return;}
+  if(action==='close-modal'){if(state.initialAssignment&&document.getElementById('modalTitle').textContent==='指派评审专家'){cancelInitialAssignment();return;}closeModal();return;}
+  if(action==='modal-submit'){modalSubmit?.();return;}
+  if(action==='help'){openModal('V2版本说明','旅游品牌申创',`<h3>围绕项目办理</h3><p>项目列表 → 当前办理 → 申报材料与办理记录。未到达的节点不会开放办理页面。</p><div class="alert gray"><div><strong>原型范围</strong><p>前端业务交互及本地数据保存已实现。OCR已开放演示识别、核对与回填，各上传点支持模拟上传，填报和当前待办有默认值；所有演示数据不代表真实材料或真实OCR结果。AI检索与智能助手仍置灰。地图测距、舆情查询、正式账号、服务器文件存储和手机扫码签字需对接服务。文件演示限8MB。</p></div></div><p>V2使用独立文件与本地数据；此前版本不受影响。</p>`);return;}
+  if(action==='open-p'){openProject(b.dataset.project);return;}
+  if(action==='go-records'){document.getElementById('projectRecords')?.scrollIntoView({block:'start',behavior:'smooth'});return;}
+  if(action==='materials-modal'){materialsModal();return;}
+  if(action==='previous'){previousModal();return;}
+  if(action==='search-materials'||action==='ai-item'){searchModal(b.dataset.title||'');return;}
+  if(action==='run-search'){document.getElementById('searchResults').innerHTML=searchResults(document.getElementById('materialQuery').value.trim());return;}
+  if(action==='preview-file'||action==='download-file'||action==='delete-file'){const historyId=b.closest('[data-history-project]')?.dataset.historyProject;const handle=()=>fileAction(action,b.dataset.fileKey,Number(b.dataset.index));if(historyId&&action!=='delete-file')withHistoricalProject(historyId,handle);else if(!historyId)handle();return;}
+  if(action==='brand-pick-file'){openBrandFilePicker(p,b.dataset.fileKey);return;}
+  if(action==='brand-add-row'||action==='brand-remove-row'){updateBrandRows(p,action,b.dataset.brandTable,b.dataset.brandRow);return;}
+  if(action==='legacy-submit-field'){submitLegacyFieldReview(p);return;}
+  if(action==='save-draft'){if(save())toast('草稿已暂存，未提交前可继续修改。');return;}
+  if(action==='edit-application'){resumeApplication(p);return;}
+  if(action==='apply-next'||action==='apply-prev'){state.formStep=clampFormSection(p,state.formStep+(action==='apply-next'?1:-1));navigate('apply/'+p.id+'/'+state.formStep);return;}
+  if(action==='submit-application'){submitApplication();return;}
+  if(action==='submit-initial'){
+    if(state.role!=='hall'||p.stage!=='initial'||p.correction)return;
+    const d=decision('initialDecision'),comment=read('initialComment'),days=Number(read('correctionDays'));if(!comment)return toast('请填写初审意见');if(d==='supplement'&&(!Number.isInteger(days)||days<=0))return toast('请填写有效补正时限');
+    confirm('提交初审结论',`<p>${d==='pass'?'资料齐全，通过后直接打开专家指派。取消指派将保留待指派状态并返回首页。':'退回市州补充材料，默认不判定申报内容达标性。'}</p>`,()=>{if(d==='supplement'){p.correction={comment,due:addDays(today(),days),returnStage:'initial'};transition(p,'initial','厅方初审退回补充',comment);}else{record(p,'厅方初审通过',comment);p.stage='document';delete p.taskDrafts;save();closeModal();render();state.initialAssignment=true;state.assignment=null;assignmentModal();}});return;
+  }
+  if(action==='assign'){state.assignment=null;assignmentModal();return;}
+  if(action==='random-experts'){const n=Number(document.getElementById('assignmentCount').value);if(!Number.isInteger(n)||n<1||n>10)return toast('请输入1至10人的专家人数');if(db.experts.length<n)return toast(`专家库只有${db.experts.length}位，请调整人数或新增专家。`);state.assignment.count=n;state.assignment.selected=new Set(db.experts.map(e=>({e,r:Math.random()})).sort((a,b)=>a.r-b.r).slice(0,n).map(x=>x.e.id));updateAssignmentSelection();return;}
+  if(action==='confirm-assignment'){
+    const a=state.assignment;if(state.role!=='hall'||!a||!p||p.correction||['draft','initial','done','failed'].includes(p.stage))return;const ids=[...a.selected],n=Number(document.getElementById('assignmentCount').value);if(!Number.isInteger(n)||n<1||n>10||ids.length!==n)return toast('请选择与配置人数一致的专家，人数须为1至10人');if(ids.some(id=>!db.experts.some(e=>e.id===id)))return toast('部分专家不存在，请重新选择');
+    const old=p.assigned[a.stage]||[],completedStage=stagePath(p).indexOf(a.stage)<stagePath(p).indexOf(p.stage);p.formerExperts=[...new Set([...(p.formerExperts||[]),...old.filter(id=>!ids.includes(id)),...(completedStage?ids:[])])];p.assignmentHistory??=[];p.assignmentHistory.push({stage:a.stage,old:[...old],ids:[...ids],at:today(),actor:person(),readonly:completedStage});if(!completedStage)p.assigned[a.stage]=ids;
+    const startsField=p.stage==='creation'&&a.stage==='field';record(p,STAGES[a.stage][0]+(completedStage?'历史查看专家已调整':'专家已指派'),ids.map(expertName).join('、')+(completedStage?'；历史评分与原评审人员记录保持不变。':''),{internalOnly:true});state.assignment=null;state.initialAssignment=false;if(startsField){p.fieldAssignedAt=new Date().toLocaleString('zh-CN',{hour12:false});transition(p,'field','省厅已指派现场专家，进入现场评审','省厅确认现场专家名单，现场评审任务已激活。');}else{save();closeModal();navigate('projects');}toast('专家指派已完成，返回项目列表');return;
+  }
+  if(action==='add-expert'){addExpertModal();return;}
+  if(action==='edit-expert'){addExpertModal(b.dataset.expert);return;}
+  if(action==='cancel-add-expert'){if(state.assignment)assignmentModal();else closeModal();return;}
+  if(action==='save-expert'){saveExpert();return;}
+  if(action==='expert-template'){downloadText('专家导入模板.csv','\uFEFF姓名,电话,单位,账号\n');return;}
+  if(action==='confirm-avoidance'){
+    const conflict=decision('avoidDecision')==='conflict',comment=read('avoidComment');if(conflict&&!comment)return toast('请填写回避说明');p.avoidance[state.expert]={conflict,comment,at:today()};record(p,conflict?'专家申请回避':'专家确认无回避情形',comment||'本项目无回避情形，仅确认一次。',{expert:state.expert,internalOnly:true});save();if(conflict)navigate('projects');else render();return;
+  }
+  if(action==='submit-document-expert'){
+    if(!canHandle(p)||p.stage!=='document'||state.role!=='expert'||p.avoidance[state.expert]?.conflict!==false)return;const comment=read('expertDocumentComment');if(!comment)return toast('请填写资料审核意见');const resortEvaluation=p.type==='resort'?resortMaterialResult(p):null;if(p.type==='resort'&&!resortEvaluation)return;const hotEvaluation=isHotSpring(p)?hotSpringDocumentResult(p):null;if(isHotSpring(p)&&!hotEvaluation)return;const conditionEvaluation=materialCheckCategory(p)?conditionDocumentResult(p):null;if(materialCheckCategory(p)&&!conditionEvaluation)return;
+    p.reviews[state.expert]={...(resortEvaluation?{resortEvaluation}:{}),...(hotEvaluation?{hotEvaluation}:{}),...(conditionEvaluation?{conditionEvaluation}:{}),decision:decision('expertDocumentDecision'),comment,at:new Date().toLocaleString('zh-CN',{hour12:false}),version:p.version};delete p.resortMaterialDrafts?.[state.expert];delete p.hotDocumentDrafts?.[state.expert];delete p.conditionReviewDrafts?.[state.expert];record(p,'专家资料意见已提交',comment,{expert:state.expert,internalOnly:true});const s=summary(p,'document');if(s.total&&s.completed.length===s.total){record(p,'专家资料审核全部完成','全部专家意见已汇齐，交省厅资料审核意见汇总节点办理。',{actor:'系统',automatic:true});p.stage='document-summary';}save();navigate('projects');toast('意见已提交，返回项目列表');return;
+  }
+  if(action==='submit-document-hall'){
+    if(!canHandle(p)||state.role!=='hall'||p.stage!=='document-summary')return;const d=decision('documentDecision'),comment=read('documentComment'),days=Number(read('correctionDays'));if(!comment)return toast('请填写厅方办理意见');if(d==='supplement'&&(!Number.isInteger(days)||days<=0))return toast('请填写有效补正时限');
+    if(d==='supplement'){p.correction={comment,due:addDays(today(),days),returnStage:'document-summary'};transition(p,'document-summary','厅方要求补证',comment);}else if(p.type==='scenic'){p.assigned.meeting=[...(p.assigned.document||[])];transition(p,'meeting','省厅资料审核意见汇总完成',comment);}else beginCreation(p,comment);return;
+  }
+  if(action==='resort-review-record'){documentReviewRecord(p,b.dataset.expert);return;}
+  if(action==='resort-fill'){fillResortDemo(p);return;}
+  if(action==='hot-fill'){fillHotSpringDemo(p);return;}
+  if(action==='fill-condition-review'){fillConditionReview(p);return;}
+  if(action==='summer-fill-required'){fillSummerPrerequisites(p);return;}
+  if(action==='hot-history'){hotSpringHistory(p);return;}
+  if(action==='hot-history-view'){previousMaterials(b.dataset.source);return;}
+  if(action==='hot-history-copy'){copyHotSpringHistory(p,b.dataset.source);return;}
+  if(action==='score-record'){scoreRecordModal(b.dataset.stage,b.dataset.expert);return;}
+  if(action==='stage-records'){openModal(STAGES[b.dataset.stage][0]+'评分汇总',p.name,scoreTable(p,b.dataset.stage),'',null,true);return;}
+  if(action==='document-records'){if(!['hall','expert'].includes(state.role)||!visibleProjects().includes(p))return;openModal('专家资料审核原始意见',p.name,reviewTable(p),'',null,true);return;}
+  if(action==='to-hall'){if(state.role==='hall'&&summary(p,'meeting').total&&summary(p,'meeting').completed.length===summary(p,'meeting').total)transition(p,'hall','线下专家会议评审完成','专家独立评分已全部提交。');return;}
+  if(action==='hall-context'){hallContext();return;}
+  if(action==='save-context'){p.contextNote=read('contextNote');save();closeModal();toast('复审核验说明已保存');return;}
+  if(action==='submit-hall'){
+    if(state.role!=='hall'||p.stage!=='hall'||!canHandle(p))return;const comment=read('hallComment'),internal=read('internalRemark'),d=decision('hallDecision');if(!comment)return toast('请填写综合评审意见');const s=summary(p,'meeting');if(!s.total||s.completed.length!==s.total)return toast('专家尚未全部提交');confirm('提交复审结论',`<p>${d==='pass'?'通过后进入现场创建期，不公示。':'不通过后终止本年申报资格。'}原始专家分和本次计算规则均留存。</p>`,()=>{p.reviewSnapshot={removeHigh:!!p.removeHigh,removeLow:!!p.removeLow,average:averageScore(p),scores:clone(s.completed)};if(d==='pass'){p.creationStart=today();p.creationEnd=addMonths(today(),12);p.planDue=addDays(today(),60);transition(p,'creation','综合评审意见：通过',comment,{internal});}else{transition(p,'failed','综合评审意见：不通过',comment,{internal});}});return;
+  }
+  if(action==='request-field'){
+    if(!p||p.stage!=='creation'||p.correction)return;
+    if(state.role==='hall'){state.assignment=null;assignmentModal();return;}
+    if(state.role!=='city'||p.region!=='黔东南州'||p.creationStatus==='requested')return;
+    p.creationStatus='requested';p.fieldRequest={at:new Date().toLocaleString('zh-CN',{hour12:false}),actor:person()};record(p,'市州已申请现场评审','仅更新申请状态，流程仍在现场创建期，等待省厅指派现场专家。');save();navigate('projects');toast('申请已记录，仍处于现场创建期');return;
+  }
+  if(action==='extension'){if(state.role==='city'&&p?.region==='黔东南州'&&p.stage==='creation'&&!p.correction&&p.creationStatus!=='extension')extensionModal();return;}
+  if(action==='submit-extension'){if(state.role!=='city'||p?.region!=='黔东南州'||p.stage!=='creation'||p.correction||p.creationStatus==='extension')return;const date=read('extensionDate'),reason=read('extensionReason');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<=p.creationEnd||!reason)return toast('请填写晚于创建期参考结束日期的日期及延期原因');p.extension={date,reason,at:new Date().toLocaleString('zh-CN',{hour12:false}),actor:person()};p.creationStatus='extension';record(p,'创建期状态：申请延期',`申请延至 ${date}；${reason}。仅记录状态，不新建审批节点。`);save();closeModal();navigate('projects');toast('已记录申请延期状态，流程仍在现场创建期');return;}
+  if(action==='field-uploads'){fieldUploadsModal();return;}
+  if(action==='item-evidence'){evidenceModal(b.dataset.question);return;}
+  if(action==='map-assist'){openModal('地图辅助核验',b.dataset.title,`<div class="alert gray"><p>地图测距接口待接入。请选择原始测量资料核验，不生成虚构距离。</p></div>${field('measureValue','人工核验实测值（含单位）','text',p.measurements?.[b.dataset.title]||'')}`,button('关闭','close-modal')+primary('保存实测记录','save-measure',`data-title="${esc(b.dataset.title)}"`));return;}
+  if(action==='save-measure'){p.measurements??={};p.measurements[b.dataset.title]=read('measureValue');save();closeModal();toast('实测记录已保存');return;}
+  if(action==='finish-score'){finishScore();return;}
+  if(action==='submit-score'){
+    if(isLegacyScenic(p))return confirmLegacyFieldReview(p);
+    const sh=sheetFor(p,p.stage);if(!sh.signature?.data)return toast('请先上传本人签字图片');if(sh.submitted||!canHandle(p))return;if(p.type==='resort'&&(!sh.resortRuleVersion||!sh.comment.trim()||resortScoreIssue(resortFieldMajors.flatMap(m=>m.questions),sh.answers,'field')))return toast('请返回并核对现场综合评价');if(isHotSpring(p)){if(!prepareHotSpringScore(p,sh))return;}else if(isLeisureBlock(p)){if(!finishLeisureField(p,sh))return;sh.total=null;}else if(p.type==='summer-resort'){if(!validateSummerPrerequisites(p,sh)||sh.summerScoringStatus!==(summerCanScore(p,sh)?'scored':'not-started'))return;sh.total=summerCanScore(p,sh)?scoreTotal(sh):null;}else sh.total=scoreTotal(sh);sh.submitted=true;sh.at=new Date().toLocaleString('zh-CN',{hour12:false});record(p,isLeisureBlock(p)?'专家现场核验已提交':'专家评分已提交',sh.comment,{expert:state.expert,internalOnly:true});if(p.stage==='meeting'&&summary(p,'meeting').completed.length===summary(p,'meeting').total){record(p,'线下专家会议评审已完成','全体专家已提交评审意见，进入省文旅厅复审。');p.stage='hall';}save();closeModal();navigate('projects');toast(isLeisureBlock(p)?'现场核验与签字已提交，返回项目列表':'评审记录与签字已提交，返回项目列表');return;
+  }
+  if(action==='submit-field-hall'){
+    if(state.role!=='hall'||p.stage!=='field'||!canHandle(p)||!summary(p,'field').total)return;const comment=read('fieldHallComment'),d=decision('fieldDecision');if(!comment)return toast('请填写现场汇总意见');if(!['pass','reject'].includes(d))return toast('请选择现场评审结论');if(d==='pass')transition(p,'committee','现场评审通过',comment);else confirm('确认现场评审不通过',`<p>提交后将结束本年度申报并直接归档，不再退回补正，也不进入上会和公示。</p><p>不通过原因：${esc(comment)}</p><p class="helper">已提交材料、专家原始评分和办理意见均保留，只读可查。</p>`,()=>{if(state.role!=='hall'||p.stage!=='field'||!canHandle(p)||!summary(p,'field').total)return;delete p.correction;transition(p,'failed','现场评审不通过，申报结束并归档',comment);});return;
+  }
+  if(action==='submit-committee'){if(state.role!=='hall'||p.stage!=='committee'||!p.committeeFiles?.length)return;transition(p,'publicity','上会审定已完成','已上传上会材料，等待结果公示。',{files:clone(p.committeeFiles)});return;}
+  if(action==='configure-publicity'){configurePublicity();return;}
+  if(action==='export-publicity'){exportPublicity();return;}
+  if(action==='submit-publicity'){submitPublicity();return;}
+  if(action==='publicity-batch'){publicityBatchModal(b.dataset.project);return;}
+  if(action==='save-objection'){saveObjection();return;}
+  if(action==='complete-publicity'){completeEligiblePublicity();closeModal();navigate('publicity');return;}
+  if(action==='notice'){const n=db.notices[Number(b.dataset.index)];openModal(n.title,'贵州省文化和旅游厅',`<article class="notice-paper"><h2>${esc(n.title)}</h2><p>${esc(n.body)}</p>${n.projectIds?`<p>${n.projectIds.map((id,i)=>`${i+1}. ${esc(publicityProjectName(getProject(id))||id)}`).join('<br>')}</p>`:''}${n.start?`<p>公示期：${n.start} 至 ${n.end}。${esc(n.contact||'异议请按正式公告公布的指定渠道提出。')}</p>`:''}<div class="sign">贵州省文化和旅游厅<br>${n.date}</div></article>`,'',null,true);return;}
+  if(action==='add-settings'){if(state.role==='admin')settingsModal(Number(b.dataset.year)||null,b.dataset.settingsCategory);return;}
+  if(action==='edit-settings'){if(state.role==='admin')settingsModal(Number(b.dataset.year),b.dataset.settingsCategory);return;}
+  if(action==='settings-history'){if(state.role==='admin')settingsHistory(Number(b.dataset.year),b.dataset.settingsCategory);return;}
+  if(action==='save-settings'){
+    if(state.role!=='admin')return;const year=Number(read('configYear')),type=read('configCategory'),start=read('configStart-'+type),end=read('configEnd-'+type);
+    if(state.settingsYear&&year!==state.settingsYear)return toast('编辑时不能修改申报年度');
+    if(state.settingsCategory&&type!==state.settingsCategory)return toast('编辑时不能修改申创类别');
+    if(!saveCategoryAnnualConfig(year,type,start,end,state.settingsEditing))return validationError('请核对所选类别的起止时间；已配置的年度和类别请从行内编辑',fieldSelector('configCategory'));
+    save();closeModal();render();toast(`${year}年度${cat(type).name}报名时间已保存，其他类别不变`);return;
+  }
+  if(action==='assistant'){assistant();return;}
+  if(action==='assistant-search'){document.getElementById('assistantResults').innerHTML=searchResults(document.getElementById('assistantQuery').value.trim());return;}
+});
+document.addEventListener('input',e=>{
+  const el=e.target,p=getProject();if(el.dataset.field){if(!el.matches('select,input[type="checkbox"],input[type="radio"]'))captureField(el);return;}
+  captureTaskDraft(el);
+  if(el.id==='projectSearch'){state.query=el.value;updateList();return;}
+  if(el.id==='expertQuery'){document.querySelectorAll('#expertTable tbody tr').forEach(row=>row.hidden=!row.textContent.includes(el.value));return;}
+  if(el.name==='scoreComment'&&p&&state.role==='expert'){sheetFor(p,p.stage).comment=el.value;save();return;}
+  if(el.name?.startsWith('deduction-')||el.name?.startsWith('rectification-')){if(state.role!=='expert'||!['meeting','field'].includes(p.stage)||sheetFor(p,p.stage).submitted)return;const prefix=el.name.startsWith('deduction-')?'deduction-':'rectification-',id=el.name.slice(prefix.length),sh=sheetFor(p,p.stage);sh.answers[id]??={};sh.answers[id][prefix==='deduction-'?'note':'rectification']=el.value;save();}
+  if(el.name?.startsWith('photo-desc-')){const sh=sheetFor(p,p.stage),i=Number(el.name.slice(11));if(sh.uploads?.photos?.[i]){sh.uploads.photos[i].description=el.value;save();}}
+});
+document.addEventListener('change',async e=>{
+  const el=e.target,p=getProject();if(el.id==='expertSelect'){state.expert=el.value;state.tab='task';render();return;}
+  if(el.name==='configYear'||el.name==='configCategory'){const year=Number(read('configYear')),type=read('configCategory'),host=document.querySelector('.registration-settings');clearValidation();if(host&&cat(type))host.innerHTML=settingsPeriodFields(year,type);return;}
+  captureTaskDraft(el);
+  if(el.id==='dashboardYear'){state.year=Number(el.value);render();return;}
+  if(el.id==='dashboardCategory'){state.flowCategory=el.value;render();return;}
+  if(el.id==='projectFilter'){state.filter=el.value;updateList();return;}
+  if(el.name==='legacyFieldResult'&&isLegacyScenic(p)&&p.stage==='field'&&state.role==='expert'&&canHandle(p)){sheetFor(p,'field').result=el.value;save();return;}
+  if(el.dataset.field){captureField(el);return;}
+  if(el.dataset.publicitySelect){if(el.checked)state.selected.add(el.dataset.publicitySelect);else state.selected.delete(el.dataset.publicitySelect);document.getElementById('selectedCount').textContent=`已选择 ${state.selected.size} 个项目`;return;}
+  if(el.dataset.selectExpert){if(el.checked)state.assignment.selected.add(el.dataset.selectExpert);else state.assignment.selected.delete(el.dataset.selectExpert);updateAssignmentSelection();return;}
+  if(el.id==='assignmentStage'){state.assignment={stage:el.value,selected:new Set(p.assigned[el.value]||[])};assignmentModal();return;}
+  if(el.id==='domainFilter'){document.querySelectorAll('.expert-candidate').forEach(row=>row.hidden=el.value!=='all'&&!row.dataset.domain.includes(el.value));return;}
+  if(el.id==='removeHigh'||el.id==='removeLow'){p[el.id==='removeHigh'?'removeHigh':'removeLow']=el.checked;if(summary(p,'meeting').completed.length-(p.removeHigh?1:0)-(p.removeLow?1:0)<1){el.checked=false;p[el.id==='removeHigh'?'removeHigh':'removeLow']=false;toast('至少保留一位专家的有效评分');}document.getElementById('averageScore').textContent=averageScore(p).toFixed(2);document.getElementById('effectiveScoreCount').textContent=scoringCalculation(p).filter(x=>!x.excluded).length;document.getElementById('hallScoreTable').innerHTML=scoreTable(p,'meeting');save();return;}
+  if(el.dataset.required!==undefined&&el.type==='radio'){if(!canHandle(p)||state.role!=='expert')return;const sh=sheetFor(p,p.stage);sh.required[el.dataset.required]=el.value;save();if(p.type==='summer-resort'){const scroll=window.scrollY;render();window.scrollTo(0,scroll);document.querySelector(`[data-required="${el.dataset.required}"][value="${el.value}"]`)?.focus({preventScroll:true});}return;}
+  if(el.dataset.score||el.dataset.exactScore||el.dataset.integrity||el.dataset.summerMulti){updateScore(el);return;}
+  if(el.id==='signatureFile'){const f=el.files[0];if(!f)return;if(!/^image\/(png|jpeg)$/.test(f.type)||f.size>2*1024*1024)return toast('请上传2MB以内PNG或JPG签字图片');const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);});sheetFor(p,p.stage).signature={name:f.name,data,at:today()};document.getElementById('signaturePreview').innerHTML=`<img class="signature-preview" src="${data}" alt="专家签字">`;save();return;}
+  if(el.name==='publicityStart'){document.querySelector('[name="publicityEnd"]').value=workingEnd(el.value);return;}
+  if(el.dataset.upload==='import-experts'){importExperts(el);return;}
+  if(el.dataset.upload){await uploadFiles(el);}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('overlay').hidden){if(state.initialAssignment&&document.getElementById('modalTitle').textContent==='指派评审专家')cancelInitialAssignment();else closeModal();}else if(state.assistantOpen)assistant();}if(e.key==='Tab'&&!document.getElementById('overlay').hidden){const nodes=[...document.querySelectorAll('#overlay button:not(:disabled),#overlay input:not(:disabled),#overlay textarea:not(:disabled),#overlay select:not(:disabled)')].filter(n=>n.offsetParent!==null);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){last?.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===last){first?.focus();e.preventDefault();}}});
+document.addEventListener('keydown',event=>{const tab=event.target.closest('[data-score-section]');if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();setScoreSection(event.key==='Home'?'required':event.key==='End'?'scoring':tab.dataset.scoreSection==='required'?'scoring':'required',true);});
+function updateList(){const archived=state.view==='archive';let rows=visibleProjects().filter(p=>archived?['done','failed'].includes(p.stage):!['done','failed'].includes(p.stage)&&(state.role==='hall'&&!state.includePublicity?p.stage!=='publicity':true));rows=filterProjectRows(rows).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));document.getElementById('projectRows').innerHTML=table(rows);document.getElementById('rowCount').textContent=rows.length+' 个项目';icons();}
+function updateScore(el){const p=getProject();if(!canHandle(p)||state.role!=='expert')return;const sh=sheetFor(p,p.stage);if(sh.submitted||p.type==='summer-resort'&&!summerCanScore(p,sh))return;const qs=scoreQuestions(p,p.stage).flatMap(m=>m.questions);const id=el.dataset.score||el.dataset.exactScore||el.dataset.summerMulti||(el.dataset.integrity?'L5':null),q=qs.find(q=>q.id===id);if(!q)return;const a=sh.answers[id]??={};
+  if(el.dataset.integrity){a.integrity=el.dataset.integrity==='yes';if(!a.integrity){a.score=0;a.label='空间完整性不满足，本项不得分';}else if(a.option!==undefined){a.score=5+q.options[Number(a.option)].score;}}
+  else if(el.dataset.summerMulti){const group=[...document.querySelectorAll(`[data-summer-multi="${id}"]`)];if(el.checked){if(el.dataset.option==='none')group.filter(x=>x!==el).forEach(x=>x.checked=false);else group.find(x=>x.dataset.option==='none').checked=false;}a.options=group.filter(x=>x.checked).map(x=>x.dataset.option);a.label=q.options.filter(o=>a.options.includes(o.key)).map(o=>o.label).join('；')||(a.options.includes('none')?'以上条件均不满足':'');if(a.options.length)a.score=Math.min(q.max,group.filter(x=>x.checked).reduce((s,x)=>s+Number(x.dataset.val),0));else delete a.score;}
+  else if(el.dataset.exactScore){const n=Number(el.value);let min=0,max=q.max;if(p.stage==='meeting'&&!q.integrity&&a.option!==undefined){min=q.options[Number(a.option)].min;max=q.options[Number(a.option)].score;}if(el.value===''||!Number.isFinite(n)||n<min||n>max){a.invalidScore=true;save();return validationError(`本项请输入 ${min}—${max} 分`,el);}a.score=n;}
+  else{a.score=q.integrity&&a.integrity===false?0:Number(el.dataset.val);a.option=el.dataset.opt;a.label=el.closest('label').querySelector('span')?.textContent||'';const exact=document.querySelector(`[data-exact-score="${id}"]`);if(exact)exact.value=a.score;}
+  delete a.invalidScore;save();document.getElementById('scoreTotal').innerHTML=`${scoreTotal(sh)} <small>/ ${p.stage==='meeting'?100:p.type==='scenic'?1000:500} 分</small>`;document.getElementById('scoreProgress').textContent=`已填 ${qs.filter(q=>sh.answers[q.id]?.score!==undefined).length} / ${qs.length} 项 · 草稿自动保存`;
+}
+function submitApplication(){const p=getProject();if(state.role!=='city'||!p||p.region!=='黔东南州'||!(p.stage==='draft'||p.correction))return;const issue=applicationIssues(p)[0],opening=applicationOpening(p.type,p.applicationYear);if(!p.correction&&!opening.open)return validationError(opening.reason,'.steps');if(p.correction&&today()>p.correction.due)return validationError('已超过补正截止日期，请联系厅方调整时限。','.steps');if(issue)return goApplicationIssue(p,issue);if(!document.getElementById('applicationDeclaration')?.checked)return goApplicationIssue(p,{step:applicationForms(p).length,selector:'#applicationDeclaration',message:'请核对申报材料并确认真实性承诺'});const corrected=!!p.correction;const next=corrected?p.correction.returnStage:'initial';confirm(corrected?'提交补正材料':'确认提交申报',`<p>${esc(p.name)}</p><p class="muted">提交后形成正式材料版本，返回项目列表。${corrected&&next==='document-summary'?'本次补证返回省厅资料审核意见汇总，专家原始意见继续保留。':'省文旅厅开展材料完整性审查。'}</p>`,()=>{const currentOpening=applicationOpening(p.type,p.applicationYear);if(!corrected&&!currentOpening.open){closeModal();return validationError(currentOpening.reason,'.steps');}if(corrected&&today()>p.correction.due){closeModal();return validationError('已超过补正截止日期，请联系厅方调整时限。','.steps');}const currentIssue=applicationIssues(p)[0];if(currentIssue){closeModal();return goApplicationIssue(p,currentIssue);}if(window.V2_RESOURCES&&!window.V2_RESOURCES.snapshot(p,p.version+1))return;p.version++;p.date??=today();delete p.correction;transition(p,next,corrected?'补正材料已提交':'申报已提交','提交正式申报材料 V'+p.version);});}
+function applicationMissing(p){return applicationIssues(p).map(issue=>issue.message.startsWith('请上传附件：')?issue.message.replace('请上传附件：','附件：'):issue.message.replace(/^请填写|^请选择/,''));}
+function saveExpert(){if(state.role!=='hall')return;const name=read('expertName'),title=read('expertTitle'),org=read('expertOrg'),domains=read('expertDomains').split(/[，,、]/).filter(Boolean),expiry=read('expertExpiry'),account=read('expertAccount');if(!name||!title||!org||!domains.length||!expiry||!account)return toast('请填写全部必填项');if(db.experts.some(e=>e.id!==state.editExpert&&(e.account||e.id)===account))return toast('该登录账号已存在');if(state.editExpert){Object.assign(db.experts.find(e=>e.id===state.editExpert),{name,title,org,domains,expiry,account});}else db.experts.push({id:'EX-'+Date.now().toString().slice(-7),name,title,org,domains,expiry,account,workload:0});save();if(state.assignment)assignmentModal();else{closeModal();render();}toast('专家档案与演示账号已保存');}
+async function importExperts(el){if(state.role!=='hall')return;const file=el.files[0];if(!file)return;const text=(await file.text()).replace(/^\uFEFF/,'');const rows=text.trim().split(/\r?\n/).slice(1).map(r=>r.split(','));let n=0;for(const [name,title,org,domain,expiry,account] of rows){if(!name||!title||!org||!domain||!/^\d{4}-\d{2}-\d{2}$/.test(expiry)||!account||db.experts.some(e=>(e.account||e.id)===account))continue;db.experts.push({id:'EX-I-'+Date.now()+n,name,title,org,domains:domain.split('、'),expiry,account,workload:0});n++;}save();render();toast(`已导入${n}位专家；缺项或重复账号未导入。`);}
+function exportPublicity(){const start=read('publicityStart'),end=read('publicityEnd'),channel=read('publicityChannel'),contact=read('publicityContact');const title='关于拟确定'+state.batchIds.map(id=>getProject(id).name).join('、')+'评定结果的公示';const text=`${title}\n\n根据旅游品牌申创评定相关规定，经申报、审查、专家评审、现场创建、现场评审和上会审定，下列项目拟通过评定，现予公示。\n\n${state.batchIds.map((id,i)=>`${i+1}. ${publicityProjectName(getProject(id))}`).join('\n')}\n\n公示期：${start} 至 ${end}（7个工作日）。\n发布位置：${channel}\n仅受理指定渠道的实名异议，需有理有据且关联创建标准。\n指定渠道：${contact||'【请填写正式渠道】'}\n\n贵州省文化和旅游厅\n${start}`;document.getElementById('templatePreview').innerHTML=`<div class="evidence-hit"><small>公示模板</small><p>${esc(text)}</p></div>`;downloadText('评定结果公示模板.doc',`<html><meta charset="utf-8"><body><h1>${esc(title)}</h1><p style="white-space:pre-wrap">${esc(text)}</p></body></html>`,'application/msword');}
+function submitPublicity(){if(state.role!=='hall')return;const start=read('publicityStart'),end=read('publicityEnd'),channel=read('publicityChannel'),contact=read('publicityContact');if(!start||!end||end<workingEnd(start)||!channel||!contact)return toast('请填写完整配置，公示期不能少于7个工作日');const batch='B-'+Date.now();state.batchIds.forEach(id=>{const p=getProject(id);p.publicity={start,end,channel,contact,batch,unresolved:0};record(p,'评定结果公示已发布',`公示期 ${start} 至 ${end}，发布渠道：${channel}`);});db.notices.unshift({title:'关于拟确定'+state.batchIds.map(id=>getProject(id).name).join('、')+'评定结果的公示',type:'评定公示',date:start,start,end,contact,projectIds:[...state.batchIds],body:'经规定程序完成评审和上会审定，现将本批项目拟评定结果予以公示。公示期7个工作日，仅受理指定渠道的实名异议。'});state.selected.clear();save();closeModal();navigate('publicity');toast('本批公示已配置，公示期满后可批量通过或不通过并归档');}
+function saveObjection(){const current=getProject(),p=getProject(read('objectionProject')),content=read('objectionContent');if(state.role!=='hall'||!p||p.stage!=='publicity'||!p.publicity||p.publicity.batch!==current?.publicity?.batch)return;if(p.publicity.completed||today()<p.publicity.start||today()>p.publicity.end){completeEligiblePublicity();closeModal();navigate('publicity');return toast('仅可在公示期内登记异议，期满后在公示管理办理归档');}if(!content)return validationError('请填写异议内容及依据','[name="objectionContent"]');(p.publicity.objections??=[]).push({id:crypto.randomUUID(),projectId:p.id,content,at:new Date().toLocaleString('zh-CN',{hour12:false}),actor:person()});record(p,'登记公示实名异议',content,{internalOnly:true});save();publicityBatchModal(p.id);toast('异议已关联所选项目保存');}
+function innovationModal(){const sh=sheetFor(getProject(),'field');openModal('创新加分','正式评价细则 · 最高20分',`<p>${esc(window.SUMMER_EVALUATION_RULES.innovation.rule)}</p>${window.SUMMER_EVALUATION_RULES.innovation.blocks.map((b,i)=>`<label class="check-line"><input type="checkbox" name="innovation-${i}" value="5" ${sh.innovation?.[i]?'checked':''}>${esc(b)} · 5分</label>`).join('')}<p class="helper">按细则每个符合的创新板块加5分，累计不超过20分。需在综合意见中说明依据。</p>`,button('关闭','close-modal')+primary('保存创新加分','save-innovation'));modalSubmit=null;}
+document.addEventListener('click',e=>{if(e.target.closest('[data-action="save-innovation"]')){const p=getProject();if(!p||p.type!=='summer-resort'||p.stage!=='field'||state.role!=='expert'||!canHandle(p))return;const sh=sheetFor(p,'field');if(!summerCanScore(p,sh))return;const scores=window.SUMMER_EVALUATION_RULES.innovation.blocks.map((_,i)=>document.querySelector(`[name="innovation-${i}"]`)?.checked?5:0);if(scores.reduce((s,n)=>s+n,0)>20)return toast('各板块加5分，合计不超过20分');sh.innovation=scores;sh.answers.innovation={score:scores.reduce((s,n)=>s+n,0)};save();closeModal();render();}});
+function captureTaskDraft(el){const p=getProject();if(!p||state.view!=='project'||!el.name||el.disabled||el.dataset.field||el.dataset.conditionScope||el.closest('#overlay')||el.closest('[data-question]')||el.dataset.required!==undefined)return;const key=state.role+'-'+state.expert+'-'+p.stage;p.taskDrafts??={};p.taskDrafts[key]??={};p.taskDrafts[key][el.name]=el.type==='radio'?decision(el.name):el.type==='checkbox'?el.checked:el.value;save();}
+function restoreTaskDraft(){const p=getProject();if(!p||state.view!=='project')return;const draft=p.taskDrafts?.[state.role+'-'+state.expert+'-'+p.stage]||{};document.querySelectorAll('#main [name]').forEach(el=>{if(el.disabled||el.dataset.field||el.closest('[data-question]')||el.dataset.required!==undefined||draft[el.name]===undefined)return;if(el.type==='radio')el.checked=draft[el.name]===el.value;else if(el.type==='checkbox')el.checked=draft[el.name];else el.value=draft[el.name];});}
+if(typeof scInitialize==='function')scInitialize();
+if(typeof smInitialize==='function')smInitialize();
+if(typeof qbInitialize==='function')qbInitialize();
+if(typeof nsInitialize==='function')nsInitialize();
+save();routeChanged();initializeWorkflowUI();

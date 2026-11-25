@@ -1,5 +1,7 @@
 # 旅游品牌申创系统 · V2
 
+V3.0 已独立发布 · [前端演示](https://lijiawei579.github.io/tourism-prototype-v2/v3/) · [原型讲解](https://lijiawei579.github.io/tourism-prototype-v2/v3/?explain=1) · [源码](v3/)
+
 最新前端交互原型，发布日期：2026-11-10。当前产品文档版本：V2.16。
 
 - [普通预览](https://lijiawei579.github.io/tourism-prototype-v2/)

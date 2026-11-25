@@ -1,0 +1,30 @@
+.brand-report > h2 {
+  border-bottom: 2px solid var(--line, #dce4ef);
+  margin: 0 0 1.25rem;
+  padding-bottom: .75rem;
+}
+
+.brand-section + .brand-section { margin-top: 1.5rem; }
+.brand-section > h3,
+.brand-table h4 { margin: 0 0 .65rem; }
+.brand-section .form-grid { margin: 0; }
+.brand-wide, .brand-choices { grid-column: 1 / -1; }
+.brand-choices {
+  min-width: 0;
+  border: 1px solid var(--line, #dce4ef);
+  border-radius: .45rem;
+  padding: .45rem .75rem .75rem;
+  margin: 0;
+}
+.brand-choices legend { padding: 0 .25rem; font-weight: 600; }
+.brand-choices .choice-grid { display: flex; flex-wrap: wrap; gap: .35rem 1rem; }
+.brand-table { min-width: 0; }
+.brand-table .table-wrap { overflow-x: auto; margin-top: .5rem; }
+.brand-table td { min-width: 112px; }
+.brand-table th { white-space: normal; min-width: 70px; }
+.brand-table input, .brand-table select, .brand-table textarea { width: 100%; min-width: 0; }
+.brand-table .brand-row-action { min-width: 64px; }
+.brand-table [hidden] { display: none !important; }
+.brand-section [data-brand-range] { margin-top: .8rem; }
+.brand-file-picker .check-line { align-items: flex-start; padding: .5rem 0; }
+.brand-file-picker small { display: block; color: #52637a; }

@@ -1,0 +1,21 @@
+/* V2.1: one object per menu; task tabs carry the working state. */
+.rw-tabs{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 18px;border-bottom:1px solid var(--line);padding:0 0 10px}
+.rw-tab{display:flex;gap:8px;align-items:center;padding:9px 16px;background:transparent;border:1px solid transparent;border-radius:5px;color:#606266;cursor:pointer;font-size:14px}
+.rw-tab:hover{background:#eef5ff;color:var(--brand)}
+.rw-tab.active{color:#1464bf;background:#eaf3ff;border-color:#bcd8fb;font-weight:600}
+.rw-tab span{min-width:21px;border-radius:10px;background:#fff;padding:0 6px;font-size:12px}
+.rw-task{display:inline-flex;align-items:center;gap:5px;color:#a45c07;font-size:12px}
+.rw-task .icon{width:15px;height:15px;color:#d74545}
+.rw-stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.rw-stats .stat{min-height:146px;text-align:left}
+.rw-stats .stat strong{font-size:30px;line-height:1.5}
+.rw-admin-summary>p,.rw-admin-summary>strong,.rw-hint{margin:18px 22px;display:block}
+.rw-admin-summary .footer{padding:0 22px 18px}
+@media(max-width:700px){.rw-tabs{gap:2px}.rw-tab{padding:8px 10px}.rw-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.publicity-decision-card{border:1px solid #dde4ee;border-radius:8px;margin:18px 0;padding:18px;background:#fff}
+.publicity-decision-card h3{margin:0 0 16px}.publicity-decision-card h3 small{display:block;font-weight:400;color:#778497;margin-top:4px}
+.publicity-decision-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,1.2fr);gap:24px;align-items:start}
+.publicity-decision-grid textarea{min-height:160px}.publicity-decision-grid h4{margin:0 0 10px}
+.publicity-remarks{max-height:300px;overflow:auto;padding:0 12px;background:#f7f9fc;border:1px solid #e6ebf2;border-radius:6px}
+.publicity-remarks .history-item{padding:12px 0}.publicity-remarks small{display:block;color:#748197}.publicity-remarks .remark-text{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:750px){.publicity-decision-grid{grid-template-columns:1fr}.publicity-remarks{max-height:220px}}

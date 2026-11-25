@@ -1,0 +1,340 @@
+{
+  "version": "V3.0",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 661,
+      "sha256": "84d57dc677baea019af32139e39a62fa5c48de0d5d0a271e4258854454a39c8b"
+    },
+    {
+      "file": "admin-theme.css",
+      "bytes": 29195,
+      "sha256": "27798a28f0a08dcd758cfc6a872944c778d516ffda04efd924bc6c5864450094"
+    },
+    {
+      "file": "app.js",
+      "bytes": 171816,
+      "sha256": "8f5e895431804e4ebb3479769a513dbfd3c3062190713ac3bf8f6dbd7ab0dd44"
+    },
+    {
+      "file": "brand-reports.css",
+      "bytes": 1213,
+      "sha256": "dedd5e99da50d26c2ab2de001276b4baf1cfaf4e904cbec916857538e858c6ea"
+    },
+    {
+      "file": "brand-reports.js",
+      "bytes": 30992,
+      "sha256": "6e51de68da371ec70005829e0e5227a54678cb060a9da7e63eed92bfd14b0a6d"
+    },
+    {
+      "file": "condition-review.js",
+      "bytes": 12901,
+      "sha256": "e12a560faf73be4cbe368fb52ede4f3a035fefbbe7d3ad1f2db168d49f20dd13"
+    },
+    {
+      "file": "coordinates.js",
+      "bytes": 14080,
+      "sha256": "5a4dff49d9e42a676061352528e39bb13eff0cfefbb8323c5831976d7c1f015f"
+    },
+    {
+      "file": "data.js",
+      "bytes": 68634,
+      "sha256": "dc25bb37dcec69b925b9d33201714aaa39f0d67d11c4553d29b06ab434c1d388"
+    },
+    {
+      "file": "demo.css",
+      "bytes": 1004,
+      "sha256": "01d4c355608b2ce6edae6684cab1efc4d942f48421acfe0faa96122d5c891e22"
+    },
+    {
+      "file": "demo.js",
+      "bytes": 20794,
+      "sha256": "702674f87bbdb09bf73dc01dd35b33e96022dc5c8f5db79412d9a290f47627b9"
+    },
+    {
+      "file": "docs/PRD-V2.1角色菜单与待办改造.md",
+      "bytes": 7802,
+      "sha256": "73e289266d28ff7fba1091ac8e7fc5ef52dcca7e6a78f4c773f33ec846d847a2"
+    },
+    {
+      "file": "docs/PRD-overview.md",
+      "bytes": 66238,
+      "sha256": "84954b7de7b1f0e5fedf1126cda8279ba090195a9678326b512da35b267cb731"
+    },
+    {
+      "file": "docs/PRD-坐标标准与自动转换.md",
+      "bytes": 6450,
+      "sha256": "34111485c57f55109dbefac8061d1cc9c4b42df4169e023c4c3a664246c89b96"
+    },
+    {
+      "file": "docs/PRD-数字评分与题型精简.md",
+      "bytes": 2444,
+      "sha256": "49a933dfed8df7a0b73ba93c7548449b9012b6eb8b314a28b0eaa29e8f7c74f9"
+    },
+    {
+      "file": "docs/PRD-景区边界与资源清单.md",
+      "bytes": 22908,
+      "sha256": "6b98d6905b5c6f949f3ea5b753ba3d7a24feae6e1414fb6786927d0dfd7c1ae6"
+    },
+    {
+      "file": "docs/PRD-自定义评分表与节点挂载.md",
+      "bytes": 6837,
+      "sha256": "df0e37a09cea3ca70339fc42560e428a443c17a5365be0cc9c32111cf54efd27"
+    },
+    {
+      "file": "docs/PRD-评分表配置与景区演示聚焦.md",
+      "bytes": 15865,
+      "sha256": "c080e98510c4689fca7cec7fa7cb5efc985c39e16221592e848c478c4fc8b8cd"
+    },
+    {
+      "file": "docs/PRD-题库与题表配置.md",
+      "bytes": 4706,
+      "sha256": "3847812109beab57c2406c27860658b64a6316ceb1499f6ced205b345a42bf3d"
+    },
+    {
+      "file": "docs/PRD.html",
+      "bytes": 784202,
+      "sha256": "0d61cce64cf0c9642c3a2a89b5ea5a362d6556379ca7e1583d91c4c78c38df8b"
+    },
+    {
+      "file": "docs/PRD.md",
+      "bytes": 675328,
+      "sha256": "44f807ba1e70434bdbf82fa56315f47641cd97dce0ef6942e1f08f79aaeca3cc"
+    },
+    {
+      "file": "docs/V2.4修改清单.md",
+      "bytes": 5944,
+      "sha256": "b506a87147a59ae0295efef448eff23689f7438506356d5f4bb20846163ffc5f"
+    },
+    {
+      "file": "docs/V2原型讲解预览.png",
+      "bytes": 71422,
+      "sha256": "25e2dacfb4a5440a816ac5730439983e0832ac1b2e7109964fc6cf500a9e7307"
+    },
+    {
+      "file": "docs/field-dictionary.json",
+      "bytes": 137239,
+      "sha256": "8a4a1aa1667732cbf437800d1c3908612b42235bb3947da30ba1426cb2bac8f6"
+    },
+    {
+      "file": "docs/评分配置清单.json",
+      "bytes": 538578,
+      "sha256": "ef31753c15d00a9f7781cbd178c26d9d84d7b22f013feae88e81974a4913aa9a"
+    },
+    {
+      "file": "docs/评分配置清单.md",
+      "bytes": 42464,
+      "sha256": "cf375cc09e1525b835900c2d12d25400cba3c86884777ca9a66e822ba4c06d4e"
+    },
+    {
+      "file": "guide.css",
+      "bytes": 6914,
+      "sha256": "aee75180dd9ae5bc0ffcb3f95da475f3f756ca6794914774f62c10b9cd6e59f5"
+    },
+    {
+      "file": "guide.js",
+      "bytes": 12480,
+      "sha256": "f5db17572d34638ee2438d6beabc4dc23fd4b49e4ce5c2235dc85fd57db6535e"
+    },
+    {
+      "file": "hot-spring-report.js",
+      "bytes": 4631,
+      "sha256": "b7eae274c6f55f7f0bdedb37bb7d14cbb46b846c0df0ab15dd29e33e130225b2"
+    },
+    {
+      "file": "hot-spring-review.js",
+      "bytes": 21305,
+      "sha256": "f60ddad4256ece67704dc9d37aaf3d64acaff960f62d46c84bfcbe58ee4965aa"
+    },
+    {
+      "file": "hot-spring-rules.js",
+      "bytes": 107755,
+      "sha256": "de30391c67ec16fe77a449e0764f3b0f1bf88c8ac346e8152a81501644e62704"
+    },
+    {
+      "file": "index.html",
+      "bytes": 5437,
+      "sha256": "5a4a9badcc5fc5cda31e713fa958a690865594550711b85f2bf3f5d234bb7ef4"
+    },
+    {
+      "file": "interaction-spec.js",
+      "bytes": 124814,
+      "sha256": "97d850de33ab2c99992c3ed149339411e9af3423b949a20e68fcc733ecaa734c"
+    },
+    {
+      "file": "leisure-report.js",
+      "bytes": 8263,
+      "sha256": "4984c805c2ded9dd83976c7bc2b7e53e8b88c88867bb380c2cd7e73d1af63426"
+    },
+    {
+      "file": "leisure-rules.js",
+      "bytes": 6454,
+      "sha256": "d57e853741666799b80b843b65749207421c02061a596c1ec8f7b98d42340540"
+    },
+    {
+      "file": "lz-string.min.js",
+      "bytes": 5957,
+      "sha256": "1da54955e1f0543b30256ef89b07c2e7b8c244df74ba508f8e80b9e4f744de9c"
+    },
+    {
+      "file": "numeric-scoring.css",
+      "bytes": 1943,
+      "sha256": "e3ee187e40f680790ed909b0242979a2d075ef5d6405c358e8b475b0a3a9c9d9"
+    },
+    {
+      "file": "numeric-scoring.js",
+      "bytes": 14777,
+      "sha256": "8b9089ccee29fcbea73117e103784ce2dd9afe060ccf0531fac58d2ec1aead53"
+    },
+    {
+      "file": "question-tables.css",
+      "bytes": 4280,
+      "sha256": "57fabc6fb90326c2d5715667a24123b16d2c71dfb1445281a7973aff819efa67"
+    },
+    {
+      "file": "question-tables.js",
+      "bytes": 35378,
+      "sha256": "7c52c23e915c96cf839f6b5f3af2906c5dabc9eb1ba570ddbaa45eed8d006703"
+    },
+    {
+      "file": "registration.css",
+      "bytes": 2542,
+      "sha256": "9af6afd37048a08d4f12bf8c6c049cc167854cf35d3a04ba16b71b84a43f68c0"
+    },
+    {
+      "file": "resort-report.js",
+      "bytes": 6901,
+      "sha256": "75a49248844c5a51dacaa892cfa109cf46fc852fbca6f625801a3736ebd5eaef"
+    },
+    {
+      "file": "resort-review.css",
+      "bytes": 1681,
+      "sha256": "4a51ec8ba12b3c86f6c4d6175386fd8e7962425e1f69e749a2412fb861973e3e"
+    },
+    {
+      "file": "resort-review.js",
+      "bytes": 18945,
+      "sha256": "0f8b3d8cdc12a6947936997f02089637022f3fe280cb96a7071da073f111edcc"
+    },
+    {
+      "file": "resort-rules.js",
+      "bytes": 89294,
+      "sha256": "479450582eb68a094f23173cddaadc681318b4028e13852e85f749dd7947fe0d"
+    },
+    {
+      "file": "resource-catalog.js",
+      "bytes": 4758,
+      "sha256": "8263540a073db6c313d18a946eb186bf5c96b4405431bd9e423e11efc8060488"
+    },
+    {
+      "file": "resources.css",
+      "bytes": 8012,
+      "sha256": "81cf4e034de2a59eeaa43cb9a3a41de039d70ee6c6374430768e352a717a67a5"
+    },
+    {
+      "file": "resources.js",
+      "bytes": 52899,
+      "sha256": "0243bb2250d770fa3f0a390587790b5d64c59d77c3859caa7e8bdbbe5d2d32c9"
+    },
+    {
+      "file": "review-layout.css",
+      "bytes": 4936,
+      "sha256": "97757e23fc3382e3fb0fbe04db22ac24ca023318451d7f7e74a8ce4679fab850"
+    },
+    {
+      "file": "role-workspace.css",
+      "bytes": 2074,
+      "sha256": "f63e9444a4e993e4078c2879950de1fa42fff7a0600422b7d1bd4c37773cde30"
+    },
+    {
+      "file": "role-workspace.js",
+      "bytes": 24169,
+      "sha256": "f275ae414ad3b4b809f184a1752662046cf1b49a51090e9dbce3151d0a9b49fd"
+    },
+    {
+      "file": "scenic-service-rules.js",
+      "bytes": 305996,
+      "sha256": "3fd8b14c869c2f6bea6cdb32937076b6e29f0e2b43ad7534e2420540755c4edd"
+    },
+    {
+      "file": "score-mounts.css",
+      "bytes": 3201,
+      "sha256": "f7ef1b8002233bfe80ec5e362e2984c8e56e965f3c17904a8785012cd350b9aa"
+    },
+    {
+      "file": "score-mounts.js",
+      "bytes": 50913,
+      "sha256": "11caf74c3014638ae08a05aa13d851c2b7174dee5c5dc9cf1ba5cb3b73899902"
+    },
+    {
+      "file": "scoring-catalog.js",
+      "bytes": 538607,
+      "sha256": "33ec74cf891866b18cdb5519a9c6297555b12cc60fec740bfefb90ea7e0a6981"
+    },
+    {
+      "file": "scoring-config.css",
+      "bytes": 3283,
+      "sha256": "f2888bbe28cd2b49f50251cc0def6b63255585298534f26b1d84cc69719888ad"
+    },
+    {
+      "file": "scoring-config.js",
+      "bytes": 54669,
+      "sha256": "f9132566af574c2e59fc07be5d37fb96fa81bc0e8be759279408df893c2e0ff6"
+    },
+    {
+      "file": "signature.css",
+      "bytes": 897,
+      "sha256": "b317ca4b162b4cfa9c7979a9356a474ad8e7751e24a52f401878ee8b6ee1c1ba"
+    },
+    {
+      "file": "signature.html",
+      "bytes": 910,
+      "sha256": "c29095e960ba2935a2a0e1d6009af9325a8e25cd7e9c9070d70d97ca5e0fe89f"
+    },
+    {
+      "file": "signature.js",
+      "bytes": 2391,
+      "sha256": "2b8582e6ee8aeb96371a5fe81ec51874d2bfb2af6af27c34b5e71441f9e15888"
+    },
+    {
+      "file": "styles.css",
+      "bytes": 25036,
+      "sha256": "b7e2c897774846d41dda407a4028a00ca0e4f84dc2f2f92d4b53551842f3d1ee"
+    },
+    {
+      "file": "summer-rules.js",
+      "bytes": 101984,
+      "sha256": "9bbcc8099ccf11c679884e84d9135fa75e17b3bede60054db0aca7a24ba84292"
+    },
+    {
+      "file": "validation.css",
+      "bytes": 466,
+      "sha256": "d321e698fc08c1c7e4f9cfcd61c8563377d03841c096e17b37c91f0e9f067df5"
+    },
+    {
+      "file": "validation.js",
+      "bytes": 12467,
+      "sha256": "2057d0ca81b5b032156c16663175ce1e82f96115e111390f128c9191371ca824"
+    },
+    {
+      "file": "vendor/lucide.min.js",
+      "bytes": 397450,
+      "sha256": "ab85225ecc1daa2033607856f03dd2dabcbc08e2d260a5b97e17c690aa929766"
+    },
+    {
+      "file": "vendor/qrcode.js",
+      "bytes": 56694,
+      "sha256": "79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c"
+    },
+    {
+      "file": "vendor/qrcode_UTF8.js",
+      "bytes": 793,
+      "sha256": "e522d64003b332e29271fdce4993ed3ae2934c8947f41654bd324ddcfa2de301"
+    },
+    {
+      "file": "workflow-ui.js",
+      "bytes": 39756,
+      "sha256": "d640e17eaed31a714a2e2c164d54ab001633b0b0852b36e14a362e7c43067041"
+    }
+  ]
+}
